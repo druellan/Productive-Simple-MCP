@@ -834,12 +834,13 @@ async def quick_search(
         for item in result.get("data", []):
             attributes = item.get("attributes", {})
             record_type = attributes.get("record_type", "")
+            record_id = attributes.get("record_id", "")
             
-            # Construct webapp URL
-            webapp_url = f"https://app.productive.io/27956-lineout/{record_type}s/{attributes.get('record_id', '')}"
+            # Construct webapp URL (use raw record_type/record_id path; task hydration adds exact URL later)
+            webapp_url = f"https://app.productive.io/27956-lineout/{record_type}s/{record_id}"
             
             filtered_item = {
-                "record_id": attributes.get("record_id"),
+                "record_id": record_id,
                 "record_type": record_type,
                 "title": attributes.get("title", ""),
                 "subtitle": attributes.get("subtitle", ""),
@@ -849,6 +850,25 @@ async def quick_search(
                 "updated_at": attributes.get("updated_at", ""),
                 "webapp_url": webapp_url
             }
+            
+            # For tasks, hydrate with full task details to expose workflow_status_name (custom status)
+            if record_type == "task" and record_id:
+                try:
+                    task_details = await client.get_task(int(record_id))
+                    filtered_task = filter_response(task_details)
+                    task_data = filtered_task.get("data", {}) if isinstance(filtered_task, dict) else {}
+                    task_attrs = task_data.get("attributes", {}) if isinstance(task_data, dict) else {}
+
+                    workflow_status = task_attrs.get("workflow_status_name")
+                    if workflow_status:
+                        filtered_item["workflow_status_name"] = workflow_status
+
+                    # Prefer canonical webapp URL from filtered task if present
+                    if "webapp_url" in task_data:
+                        filtered_item["webapp_url"] = task_data["webapp_url"]
+                except Exception as task_error:
+                    await ctx.warning(f"Could not fetch workflow status for task {record_id}: {str(task_error)}")
+            
             filtered_data.append(filtered_item)
 
         return {

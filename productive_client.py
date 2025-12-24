@@ -79,13 +79,16 @@ class ProductiveClient:
         return await self._request("GET", "/projects", params=params)
 
     async def get_tasks(self, params: Optional[dict] = None) -> Dict[str, Any]:
-        """Get all tasks
+        """Get all tasks with workflow_status always included
         """
+        if params is None:
+            params = {}
+        params["include"] = "workflow_status"
         return await self._request("GET", "/tasks", params=params)
 
     async def get_task(self, task_id: int) -> Dict[str, Any]:
-        """Get task by ID"""
-        return await self._request("GET", f"/tasks/{str(task_id)}")
+        """Get task by ID with workflow_status always included"""
+        return await self._request("GET", f"/tasks/{str(task_id)}", params={"include": "workflow_status"})
 
     async def get_comments(self, params: Optional[dict] = None) -> Dict[str, Any]:
         """Get all comments
