@@ -1,3 +1,12 @@
+"""
+Simple MCP server to access the Productive API (projects, tasks, comments, todo-lists).
+Version: 0.3.0
+
+This software is provided "as is" without warranty of any kind. Use at your own risk.
+Author: druellan (druellan@ecimtech.com)
+License: MIT
+"""
+
 from fastmcp import FastMCP, Context
 from typing import Any, Dict, Annotated
 from pydantic import Field
