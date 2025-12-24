@@ -94,7 +94,7 @@ async def quick_search(
         - Full entity details for each match
 
     Examples:
-        quick_search("ded")  # Search for "ded" across all content types
+        quick_search("red")  # Search for "red" across all content types
         quick_search("project", search_types=["project"])  # Search only in projects
         quick_search("meeting", deep_search=False)  # Quick search without deep scan
     """

@@ -86,7 +86,8 @@ def _filter_task_list_attributes(attributes: Dict[str, Any]) -> Dict[str, Any]:
         'billable_time',
         'closed_at',
         'type_id',
-        'private'
+        'private',
+        'workflow_status_name'  # Add custom status name
     ]
     
     filtered = {k: v for k, v in attributes.items() if k in essential_fields}
@@ -173,18 +174,35 @@ def filter_response(response: Dict[str, Any]) -> Dict[str, Any]:
     """Filter Productive API response: remove sensitive fields and clean empty values.
     
     Also adds webapp_url to resources for easy access to the Productive web interface.
+    For tasks, also extracts and adds workflow_status_name from included data.
     """
     filtered = remove_null_and_empty(response)
     
-    # Add webapp URLs to single resource responses
+    # Add webapp URLs and workflow status names to resources
     if isinstance(filtered, dict) and "data" in filtered:
+        included = response.get("included", [])
+        
         if isinstance(filtered["data"], dict):
             # Single resource
-            _add_webapp_url(filtered["data"])
+            item = filtered["data"]
+            _add_webapp_url(item)
+            
+            # Add workflow status name for tasks
+            if item.get("type") == "tasks":
+                workflow_status_name = _extract_workflow_status_name(item, included)
+                if workflow_status_name and "attributes" in item:
+                    item["attributes"]["workflow_status_name"] = workflow_status_name
+                    
         elif isinstance(filtered["data"], list):
             # Multiple resources
             for item in filtered["data"]:
                 _add_webapp_url(item)
+                
+                # Add workflow status name for tasks
+                if item.get("type") == "tasks":
+                    workflow_status_name = _extract_workflow_status_name(item, included)
+                    if workflow_status_name and "attributes" in item:
+                        item["attributes"]["workflow_status_name"] = workflow_status_name
     
     return filtered
 
@@ -204,6 +222,43 @@ def _add_webapp_url(item: Dict[str, Any]) -> None:
         item["webapp_url"] = get_webapp_url(resource_type, resource_id)
 
 
+def _extract_workflow_status_name(item: Dict[str, Any], included: list) -> str:
+    """Extract workflow status name from included data.
+    
+    Args:
+        item: Task item with relationships
+        included: List of included resources from API response
+        
+    Returns:
+        Workflow status name or None if not found
+    """
+    if not isinstance(item, dict) or not isinstance(included, list):
+        return None
+    
+    # Get workflow_status relationship
+    relationships = item.get("relationships", {})
+    workflow_status_rel = relationships.get("workflow_status", {})
+    workflow_status_data = workflow_status_rel.get("data")
+    
+    if not workflow_status_data or not isinstance(workflow_status_data, dict):
+        return None
+    
+    workflow_status_id = workflow_status_data.get("id")
+    if not workflow_status_id:
+        return None
+    
+    # Find the workflow_status in included data
+    for included_item in included:
+        if (isinstance(included_item, dict) and 
+            included_item.get("type") == "workflow_statuses" and 
+            included_item.get("id") == workflow_status_id):
+            
+            attributes = included_item.get("attributes", {})
+            return attributes.get("name")
+    
+    return None
+
+
 def filter_task_list_response(response: Dict[str, Any]) -> Dict[str, Any]:
     """Filter task list responses to show only essential fields for browsing.
     
@@ -213,12 +268,13 @@ def filter_task_list_response(response: Dict[str, Any]) -> Dict[str, Any]:
     - non-essential metadata
     
     Keeps only what's needed to identify and select tasks.
-    Also adds webapp_url for easy access.
+    Also adds webapp_url and workflow_status_name for easy access.
     """
     if not isinstance(response, dict):
         return response
     
     filtered = {}
+    included = response.get("included", [])
     
     # Process data array
     if "data" in response and isinstance(response["data"], list):
@@ -232,7 +288,14 @@ def filter_task_list_response(response: Dict[str, Any]) -> Dict[str, Any]:
                 
                 # Filter attributes to essential fields only
                 if "attributes" in item:
-                    filtered_item["attributes"] = _filter_task_list_attributes(item["attributes"])
+                    attrs = _filter_task_list_attributes(item["attributes"])
+                    
+                    # Extract and add workflow status name
+                    workflow_status_name = _extract_workflow_status_name(item, included)
+                    if workflow_status_name:
+                        attrs["workflow_status_name"] = workflow_status_name
+                    
+                    filtered_item["attributes"] = attrs
                 
                 # Add webapp URL for easy access
                 _add_webapp_url(filtered_item)
