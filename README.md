@@ -2,10 +2,11 @@
 
 A Model Context Protocol (MCP) server for integrating Productive.io into AI workflows. This server allows AI assistants and tools to access projects, tasks, pages and teams. Built with [FastMCP](https://gofastmcp.com/).
 
-This implementation is tailored for read-only operations, providing streamlined access to essential data while minimizing token consumption using TOON as output. It is optimized for efficiency and simplicity, exposing only the necessary information. For a more comprehensive solution, consider BerwickGeek's implementation: [Productive MCP by BerwickGeek](https://github.com/berwickgeek/productive-mcp).
+This implementation provides both read and write operations for Productive.io, with streamlined access to essential data while minimizing token consumption using TOON as output. It is optimized for efficiency and simplicity, exposing only the necessary information. For a more comprehensive solution, consider BerwickGeek's implementation: [Productive MCP by BerwickGeek](https://github.com/berwickgeek/productive-mcp).
 
 ## Features
 
+### Read Operations
 - **Get Projects**: Retrieve all projects with basic information
 - **Get Tasks**: Retrieve tasks with filtering and pagination
 - **Get Task**: Retrieve a specific task by internal ID
@@ -17,6 +18,12 @@ This implementation is tailored for read-only operations, providing streamlined 
 - **Get Todo**: Retrieve a specific todo by ID
 - **Get Recent Updates**: Summarized activity feed for status updates
 - **Quick Search**: Fast, comprehensive search across projects, tasks, pages, and actions
+
+### Write Operations
+- **Create Page**: Create new pages/documents in projects
+- **Update Page**: Update existing pages/documents
+
+### Optimizations
 - **LLM-Optimized Responses**: Filtered output removes noise, strips HTML, and reduces token consumption
 
 ## Requirements
@@ -218,6 +225,63 @@ Retrieve a specific todo checklist item by ID.
 
 **Properties:**
 - `todo_id` (int): The unique Productive todo checklist item identifier
+
+---
+
+## Write Operations
+
+The following tools allow you to create and modify resources in Productive:
+
+### `create_page`
+Create a new page/document in a project.
+
+**Properties:**
+- `title` (str): Page title
+- `project_id` (int): Project ID where the page will be created
+- `body` (str, optional): Page content/body (supports HTML/markdown, default: "")
+- `parent_page_id` (int, optional): Optional parent page ID for nested pages
+
+**Description:**
+Pages in Productive are documents that can contain rich text content, attachments, and are organized within projects. Pages can be nested by specifying a parent_page_id.
+
+**Returns:**
+Dictionary with the created page details including:
+- Page ID, title, and body
+- Project and parent page relationships
+- Creation timestamps and author information
+- Webapp URL for direct access
+
+**Examples:**
+```python
+create_page("Meeting Notes", 12345, "# Notes from today's meeting...")
+create_page("Sub-page", 12345, "Content", parent_page_id=67890)
+```
+
+### `update_page`
+Update an existing page/document.
+
+**Properties:**
+- `page_id` (int): The unique Productive page identifier
+- `title` (str, optional): Optional new page title
+- `body` (str, optional): Optional new page content/body
+
+**Description:**
+Allows partial updates - only provide the fields you want to change. If both title and body are omitted, no changes will be made.
+
+**Returns:**
+Dictionary with the updated page details including:
+- Updated page ID, title, and body
+- Modification timestamps
+- Webapp URL for direct access
+
+**Examples:**
+```python
+update_page(12345, title="Updated Title")
+update_page(12345, body="New content")
+update_page(12345, title="New Title", body="New content")
+```
+
+---
 
 ## Output Format
 

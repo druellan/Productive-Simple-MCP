@@ -122,6 +122,29 @@ class ProductiveClient:
         """Get page by ID"""
         return await self._request("GET", f"/pages/{str(page_id)}")
 
+    async def create_page(self, data: dict) -> Dict[str, Any]:
+        """Create a new page
+        
+        Args:
+            data: Page data payload following Productive API structure
+        
+        Returns:
+            Created page data from API
+        """
+        return await self._request("POST", "/pages", params=data)
+
+    async def update_page(self, page_id: int, data: dict) -> Dict[str, Any]:
+        """Update an existing page
+        
+        Args:
+            page_id: ID of the page to update
+            data: Page data payload following Productive API structure
+        
+        Returns:
+            Updated page data from API
+        """
+        return await self._request("PATCH", f"/pages/{str(page_id)}", params=data)
+
     async def get_attachments(self, params: Optional[dict] = None) -> Dict[str, Any]:
         """Get all attachments with optional filtering"""
         return await self._request("GET", "/attachments", params=params)

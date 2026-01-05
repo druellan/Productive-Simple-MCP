@@ -3,31 +3,12 @@ from fastmcp.tools.tool import ToolResult
 
 from config import config
 from productive_client import client, ProductiveAPIError
-from utils import filter_response, filter_task_list_response, filter_page_list_response
-
-
-async def _handle_productive_api_error(ctx: Context, e: ProductiveAPIError, resource_type: str = "data") -> None:
-    """Handle ProductiveAPIError consistently across all tool functions.
-    
-    Developer notes:
-    - ctx: MCP context for logging and error handling
-    - e: The ProductiveAPIError exception
-    - resource_type: Type of resource being fetched (e.g., "projects", "tasks", "comments")
-    """
-    await ctx.error(f"Productive API error: {e.message}")
-    
-    if e.status_code == 404:
-        await ctx.warning(f"No {resource_type} found")
-    elif e.status_code == 401:
-        await ctx.error("Invalid API token - check configuration")
-    
-    raise e
+from utils import filter_response, filter_task_list_response, filter_page_list_response, _handle_productive_api_error
 
 
 async def get_projects(ctx: Context) -> ToolResult:
     """Fetch projects and post-process response for LLM safety.
 
-    Developer notes:
     - Wraps client.get_projects(); sorts by most recent activity first.
     - Applies utils.filter_response to strip noise and add webapp_url.
     - Raises ProductiveAPIError on API failure; errors are logged via ctx.
@@ -60,7 +41,6 @@ async def get_tasks(
     """
     List tasks with optional filters and pagination.
 
-    Developer notes:
     - project_id and user_id are converted to Productive API filters.
     - extra_filters is passed through directly to the API (e.g., filter[status][eq]).
     - Enforces a configurable default page[size] for consistency when not provided.
@@ -98,7 +78,6 @@ async def get_tasks(
 async def get_task(ctx: Context, task_id: int) -> ToolResult:
     """Fetch a single task by internal ID.
 
-    Developer notes:
     - Wraps client.get_task(task_id).
     - Applies utils.filter_response to sanitize output.
     - Ensures time tracking fields are always present (initial_estimate, worked_time, billable_time, remaining_time).
@@ -143,7 +122,6 @@ async def get_project_tasks(
 ) -> ToolResult:
     """List tasks for a project with an optional status filter.
 
-    Developer notes:
     - status expects integers per Productive: 1=open, 2=closed (mapped to filter[status][eq]).
     - Sorts by most recent activity first.
     - Uses configurable page[size] for consistency.
@@ -191,7 +169,6 @@ async def get_project_task(
 ) -> ToolResult:
     """Fetch a task by its project-scoped task_number.
 
-    Developer notes:
     - Uses filter[project_id][eq] and filter[task_number][eq].
     - Returns the first matched record (API constrained to one).
     - Raises ProductiveAPIError(404) if not found.
@@ -237,7 +214,6 @@ async def get_comments(
 ) -> ToolResult:
     """List comments with optional filters and pagination.
 
-    Developer notes:
     - Pass-through for extra_filters (e.g., discussion_id, page_id, task_id).
     - Enforces configurable default page[size] if not provided.
     - Sort defaults to "-created_at" (most recent first).
@@ -301,7 +277,6 @@ async def get_todos(
 ) -> ToolResult:
     """List todo checklist items with optional filters.
 
-    Developer notes:
     - task_id is an int; API expects filter[task_id] to be array or scalar; we send scalar.
     - Enforces configurable default page[size] when not provided.
     - Use extra_filters for status ints (1=open, 2=closed) or assignee filters.
@@ -364,7 +339,6 @@ async def get_recent_activity(
 ) -> ToolResult:
     """Summarize recent activities within a time window.
 
-    Developer notes:
     - Builds filter[after] from UTC now minus `hours`.
     - Optional filters map directly: person_id, project_id, type (1:Comment,2:Changeset,3:Email), item_type, event, task_id.
     - Respects API page[size] limit (<=200) via max_results.
@@ -472,7 +446,6 @@ async def get_task_history(
 ) -> ToolResult:
     """Get comprehensive history for a specific task.
 
-    Developer notes:
     - Aggregates historical data from activities and task events
     - Returns status history, assignment history, milestones, and activity summary
     - Ignores unavailable data gracefully (empty arrays/null values)
@@ -620,7 +593,6 @@ async def get_pages(
 ) -> ToolResult:
     """List pages (docs) with optional filters and pagination.
 
-    Developer notes:
     - Supports project_id and creator_id filters.
     - Enforces configurable default page[size] if not provided.
     - Sorts by most recent updates first.
@@ -656,7 +628,7 @@ async def get_pages(
 async def get_page(ctx: Context, page_id: int) -> ToolResult:
     """Fetch a single page by ID.
 
-    Developer notes:
+
     - Body is JSON in attributes.body (caller may parse if needed).
     - Applies utils.filter_response to sanitize (body included via type='page').
     """
@@ -684,7 +656,6 @@ async def get_attachments(
 ) -> ToolResult:
     """List attachments with optional filters and pagination (metadata only).
 
-    Developer notes:
     - Enforces configurable default page[size] when not provided.
     - Sorting not supported by API - uses default order.
     """
@@ -731,7 +702,6 @@ async def get_attachment(ctx: Context, attachment_id: int) -> ToolResult:
 async def get_people(ctx: Context, page_number: int = None, page_size: int = config.items_per_page) -> ToolResult:
     """List all team members/people with optional pagination.
 
-    Developer notes:
     - Supports pagination with configurable default page[size].
     - Sorts by most recent activity first.
     - Applies utils.filter_response to sanitize output.
@@ -762,7 +732,6 @@ async def get_people(ctx: Context, page_number: int = None, page_size: int = con
 async def get_person(ctx: Context, person_id: int) -> ToolResult:
     """Fetch a single person/team member by ID.
 
-    Developer notes:
     - Wraps client.get_person(person_id).
     - Applies utils.filter_response to sanitize output.
     - Returns detailed information about a specific team member.

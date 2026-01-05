@@ -3,6 +3,23 @@ import bleach
 from config import config
 
 
+async def _handle_productive_api_error(ctx, e, resource_type: str = "data") -> None:
+	"""Handle ProductiveAPIError consistently across all tool functions.
+	
+	- ctx: MCP context for logging and error handling
+	- e: The ProductiveAPIError exception
+	- resource_type: Type of resource being fetched (e.g., "projects", "tasks", "comments")
+	"""
+	await ctx.error(f"Productive API error: {e.message}")
+	
+	if e.status_code == 404:
+		await ctx.warning(f"No {resource_type} found")
+	elif e.status_code == 401:
+		await ctx.error("Invalid API token - check configuration")
+	
+	raise e
+
+
 def get_webapp_url(resource_type: str, resource_id: str) -> str:
     """Generate Productive web app URL for a resource.
     

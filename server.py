@@ -12,7 +12,8 @@ from typing import Any, Dict, Annotated
 from pydantic import Field
 from config import config
 from productive_client import client
-import tools
+import tools_read
+import tools_write
 from contextlib import asynccontextmanager
 import json
 from toon import encode as toon_encode
@@ -107,7 +108,7 @@ async def quick_search(
         quick_search("project", search_types=["project"])  # Search only in projects
         quick_search("meeting", deep_search=False)  # Quick search without deep scan
     """
-    return await tools.quick_search(
+    return await tools_read.quick_search(
         ctx,
         query=query,
         search_types=search_types,
@@ -172,7 +173,7 @@ async def get_recent_activity(
         get_recent_activity(hours=168, event_type='edit')  # Task edits from last week
         get_tasks(extra_filters={'filter[status][eq]': 2}, sort='-updated_at', page_size=10)  # Recently closed tasks
     """
-    return await tools.get_recent_activity(
+    return await tools_read.get_recent_activity(
         ctx,
         hours=hours,
         user_id=user_id,
@@ -195,7 +196,7 @@ async def get_projects(ctx: Context) -> Dict[str, Any]:
     - Archived status (if applicable)
     - Webapp URL for direct access
     """
-    return await tools.get_projects(ctx)
+    return await tools_read.get_projects(ctx)
 
 
 @mcp.tool
@@ -236,7 +237,7 @@ async def get_tasks(
     Returns:
         Dictionary of tasks matching the provided filters
     """
-    return await tools.get_tasks(
+    return await tools_read.get_tasks(
         ctx,
         page_number=page_number,
         page_size=page_size,
@@ -265,7 +266,7 @@ async def get_task(
     - Time tracking: initial estimate, remaining time, billable time, and worked time (in minutes)
     - Todo counts: total and open
     """
-    return await tools.get_task(ctx=ctx, task_id=task_id)
+    return await tools_read.get_task(ctx=ctx, task_id=task_id)
 
 
 @mcp.tool
@@ -296,7 +297,7 @@ async def get_task_history(
         get_task_history(14677921, hours=168)  # Last week only
         get_task_history(14677921,1 hours=24)  # Last 24 hours
     """
-    return await tools.get_task_history(ctx, task_id, hours)
+    return await tools_read.get_task_history(ctx, task_id, hours)
 
 
 # @mcp.tool
@@ -393,7 +394,7 @@ async def get_comments(
     - Attachments and file references
     - Mentions of team members or clients
     """
-    return await tools.get_comments(
+    return await tools_read.get_comments(
         ctx,
         project_id=project_id,
         task_id=task_id,
@@ -448,7 +449,7 @@ async def get_todos(
     - Due dates and priority relative to parent task
     - Estimated vs actual time for checklist items
     """
-    return await tools.get_todos(
+    return await tools_read.get_todos(
         ctx,
         task_id=task_id,
         page_number=page_number,
@@ -472,7 +473,7 @@ async def get_todo(
     - Time estimates vs actual completion time
     - Related comments and file attachments
     """
-    return await tools.get_todo(ctx, todo_id)
+    return await tools_read.get_todo(ctx, todo_id)
 
 
 @mcp.tool
@@ -500,7 +501,7 @@ async def get_pages(
     Example:
         get_pages(project_id=1234)  # Get all pages for a specific project
     """
-    return await tools.get_pages(
+    return await tools_read.get_pages(
         ctx,
         project_id=project_id,
         creator_id=creator_id,
@@ -519,7 +520,7 @@ async def get_page(
     Returns:
         Dictionary with complete page details including JSON-formatted content
     """
-    return await tools.get_page(ctx, page_id)
+    return await tools_read.get_page(ctx, page_id)
 
 
 @mcp.tool
@@ -538,7 +539,7 @@ async def get_people(
     - Last seen and join dates
     - Avatar and contact information
     """
-    return await tools.get_people(
+    return await tools_read.get_people(
         ctx,
         page_number=page_number,
         page_size=page_size,
@@ -559,7 +560,7 @@ async def get_person(
     - Custom fields and additional metadata
     - Avatar and profile information
     """
-    return await tools.get_person(ctx, person_id)
+    return await tools_read.get_person(ctx, person_id)
 
 
 @mcp.tool
@@ -582,8 +583,73 @@ async def get_attachments(
         Dictionary containing attachment metadata (name, type, size, relationships)
         Note: This provides metadata only, not actual file content
     """
-    return await tools.get_attachments(
+    return await tools_read.get_attachments(
         ctx, page_number=page_number, page_size=page_size, extra_filters=extra_filters
+    )
+
+
+@mcp.tool
+async def create_page(
+    ctx: Context,
+    title: Annotated[str, Field(description="Page title")],
+    project_id: Annotated[int, Field(description="Project ID where the page will be created")],
+    body: Annotated[str, Field(description="Page content/body (supports HTML/markdown)")] = "",
+    parent_page_id: Annotated[int, Field(description="Optional parent page ID for nested pages")] = None,
+) -> Dict[str, Any]:
+    """Create a new page in a project.
+
+    Pages in Productive are documents that can contain rich text content,
+    attachments, and are organized within projects. Pages can be nested
+    by specifying a parent_page_id.
+
+    Returns:
+        Dictionary with the created page details including:
+        - Page ID, title, and body
+        - Project and parent page relationships
+        - Creation timestamps and author information
+        - Webapp URL for direct access
+
+    Examples:
+        create_page("Meeting Notes", 12345, "# Notes from today's meeting...")
+        create_page("Sub-page", 12345, "Content", parent_page_id=67890)
+    """
+    return await tools_write.create_page(
+        ctx,
+        title=title,
+        project_id=project_id,
+        body=body,
+        parent_page_id=parent_page_id,
+    )
+
+
+@mcp.tool
+async def update_page(
+    ctx: Context,
+    page_id: Annotated[int, Field(description="The unique Productive page identifier")],
+    title: Annotated[str, Field(description="Optional new page title")] = None,
+    body: Annotated[str, Field(description="Optional new page content/body")] = None,
+) -> Dict[str, Any]:
+    """Update an existing page.
+
+    Allows partial updates - only provide the fields you want to change.
+    If both title and body are omitted, no changes will be made.
+
+    Returns:
+        Dictionary with the updated page details including:
+        - Updated page ID, title, and body
+        - Modification timestamps
+        - Webapp URL for direct access
+
+    Examples:
+        update_page(12345, title="Updated Title")
+        update_page(12345, body="New content")
+        update_page(12345, title="New Title", body="New content")
+    """
+    return await tools_write.update_page(
+        ctx,
+        page_id=page_id,
+        title=title,
+        body=body,
     )
 
 
