@@ -253,6 +253,9 @@ async def get_task(
     task_id: Annotated[
         int, Field(description="The unique Productive task identifier (internal ID)")
     ],
+    include_related: Annotated[
+        bool, Field(description="Whether to include related comments and todos for full task context")
+    ] = False,
 ) -> Dict[str, Any]:
     """Get detailed task information by its internal ID.
 
@@ -264,8 +267,9 @@ async def get_task(
     - Due date, start date, and creation/update timestamps
     - Time tracking: initial estimate, remaining time, billable time, and worked time (in minutes)
     - Todo counts: total and open
+    - When include_related=true: related comments and todos for complete task context
     """
-    return await tools.get_task(ctx=ctx, task_id=task_id)
+    return await tools.get_task(ctx=ctx, task_id=task_id, include_related=include_related)
 
 
 @mcp.tool

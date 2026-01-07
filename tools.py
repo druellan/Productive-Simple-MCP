@@ -95,13 +95,14 @@ async def get_tasks(
         raise e
 
 
-async def get_task(ctx: Context, task_id: int) -> ToolResult:
+async def get_task(ctx: Context, task_id: int, include_related: bool = False) -> ToolResult:
     """Fetch a single task by internal ID.
 
     Developer notes:
     - Wraps client.get_task(task_id).
     - Applies utils.filter_response to sanitize output.
     - Ensures time tracking fields are always present (initial_estimate, worked_time, billable_time, remaining_time).
+    - When include_related=True, also fetches related comments and todos for full context.
     - Raises ProductiveAPIError on failure.
     """
     try:
@@ -126,6 +127,32 @@ async def get_task(ctx: Context, task_id: int) -> ToolResult:
             for field, default_value in time_fields.items():
                 if field not in attributes or attributes[field] is None:
                     attributes[field] = default_value
+        
+        # Fetch related data if requested
+        if include_related:
+            await ctx.info(f"Fetching related comments and todos for task {task_id}")
+            try:
+                comments_result = await client.get_comments(params={"filter[task_id][eq]": task_id})
+                comments_filtered = filter_response(comments_result)
+                
+                todos_result = await client.get_todos(params={"filter[task_id]": [task_id]})
+                todos_filtered = filter_response(todos_result)
+                
+                # Add related data to the response
+                filtered["related"] = {
+                    "comments": comments_filtered.get("data", []),
+                    "todos": todos_filtered.get("data", [])
+                }
+                
+                await ctx.info(f"Successfully retrieved {len(comments_filtered.get('data', []))} comments and {len(todos_filtered.get('data', []))} todos")
+            except ProductiveAPIError as e:
+                await ctx.warning(f"Failed to fetch related data for task {task_id}: {e.message}")
+                # Don't fail the entire request if related data fetch fails
+                filtered["related"] = {
+                    "comments": [],
+                    "todos": [],
+                    "fetch_error": e.message
+                }
         
         return filtered
         
