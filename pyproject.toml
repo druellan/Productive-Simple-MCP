@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "productive-mcp"
-version = "0.3.0"
+version = "0.4.0"
 description = "Simple MCP server to access the Productive API (activity,projects, pages, tasks, comments, todo-lists)."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -27,7 +27,7 @@ dependencies = [
 
 [tool.commitizen]
 name = "cz_conventional_commits"
-version = "0.3.0"
+version = "0.4.0"
 version_files = [
     "pyproject.toml:version",
     "server.py:version"
