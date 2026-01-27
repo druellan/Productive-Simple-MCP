@@ -4,6 +4,10 @@ A Model Context Protocol (MCP) server for integrating Productive.io into AI work
 
 This implementation is tailored for read-only operations, providing streamlined access to essential data while minimizing token consumption using TOON as output. It is optimized for efficiency and simplicity, exposing only the necessary information. For a more comprehensive solution, consider BerwickGeek's implementation: [Productive MCP by BerwickGeek](https://github.com/berwickgeek/productive-mcp).
 
+<a href="https://glama.ai/mcp/servers/@druellan/Productive-GET-MCP">
+  <img width="380" height="200" src="https://glama.ai/mcp/servers/@druellan/Productive-GET-MCP/badge" alt="Productive Simple MCP server" />
+</a>
+
 ## Features
 
 - **Get Projects**: Retrieve all projects with basic information
