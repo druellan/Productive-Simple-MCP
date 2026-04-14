@@ -24,4 +24,6 @@ _logs/*
 # Editor
 .vscode
 .github
+.agents
 .roo
+.brv
