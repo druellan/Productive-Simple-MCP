@@ -1,8 +1,14 @@
 # Productive.io MCP Server
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+![](https://badge.mcpx.dev?type=server&features=tools 'MCP server with features')
 
 A Model Context Protocol (MCP) server for integrating Productive.io into AI workflows. This server allows AI assistants and tools to access projects, tasks, pages and teams. Built with [FastMCP](https://gofastmcp.com/).
 
 This implementation is tailored for read-only operations, providing streamlined access to essential data while minimizing token consumption using TOON as output. It is optimized for efficiency and simplicity, exposing only the necessary information. For a more comprehensive solution, consider BerwickGeek's implementation: [Productive MCP by BerwickGeek](https://github.com/berwickgeek/productive-mcp).
+
+<a href="https://glama.ai/mcp/servers/@druellan/Productive-GET-MCP">
+  <img width="380" height="200" src="https://glama.ai/mcp/servers/@druellan/Productive-GET-MCP/badge" alt="Productive Simple MCP server" />
+</a>
 
 ## Features
 
