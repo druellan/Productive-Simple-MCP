@@ -65,7 +65,7 @@ mcp = FastMCP(
         "Use get_people to list team members and get_person for individual details."
         "All endpoints paginate (max 200 items). Use filters when possible to reduce scope."
     ),
-    version="1.3.0",
+    version="0.3.0",
     lifespan=lifespan,
     on_duplicate_tools="warn",
     on_duplicate_resources="warn",
@@ -279,9 +279,9 @@ async def get_task_history(
         Field(
             description="Number of hours to look back for activity history (default: 720 = 30 days)",
             ge=1,
-            le=8760  # 1 year max
-        )
-    ] = 720
+            le=8760,  # 1 year max
+        ),
+    ] = 720,
 ) -> Dict[str, Any]:
     """Get comprehensive history for a specific task.
 
@@ -548,7 +548,9 @@ async def get_people(
 @mcp.tool
 async def get_person(
     ctx: Context,
-    person_id: Annotated[int, Field(description="The unique Productive person identifier")],
+    person_id: Annotated[
+        int, Field(description="The unique Productive person identifier")
+    ],
 ) -> Dict[str, Any]:
     """Get detailed information about a specific team member/person.
 

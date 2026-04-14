@@ -10,13 +10,20 @@ readme = "README.md"
 requires-python = ">=3.10"
 license = {text = "MIT"}
 authors = [
-    {name = "druellan", email = "druellan@ecimtech.com"}
+    {name = "druellan", email = "dario.ruellan@gmail.com"}
 ]
 keywords = ["productive", "mcp", "tasks", "comments", "todos"]
 classifiers = [
-    "Programming Language :: Python :: 3",
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Intended Audience :: End Users/Desktop",
     "License :: OSI Approved :: MIT License",
-    "Operating System :: OS Independent"
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Utilities"
 ]
 dependencies = [
     "fastmcp>=2.12.3",
@@ -25,18 +32,6 @@ dependencies = [
     "python-toon>=0.1.0",
 ]
 
-[tool.commitizen]
-name = "cz_conventional_commits"
-version = "0.3.0"
-version_files = [
-    "pyproject.toml:version",
-    "server.py:version"
-]
-tag_format = "v$version"
-
 [tool.setuptools]
 package-dir = {"" = "."}
 py-modules = ["server", "config", "productive_client", "tools", "utils"]
-
-[tool.setuptools.packages.find]
-where = ["."]
