@@ -25,11 +25,14 @@ classifiers = [
     "Topic :: Utilities"
 ]
 dependencies = [
-    "fastmcp>=2.12.3",
+    "fastmcp>=3.2.4",
     "httpx>=0.28.1",
     "bleach>=6.0.0",
     "python-toon>=0.1.0",
 ]
+
+[project.scripts]
+productive-mcp = "server:mcp"
 
 [tool.setuptools]
 package-dir = {"" = "."}
