@@ -39,6 +39,7 @@
 - Run `python -m file.py` and confirm no startup errors
 - Check that all tools are registered in MCP
 - Verify TOON/JSON output formats work
+- Smoke test the packaged entrypoint: set `PRODUCTIVE_API_KEY` and `PRODUCTIVE_ORGANIZATION`, then run `uv run productive-mcp` and confirm the server starts without `TypeError: 'FastMCP' object is not callable`
 - Ask the user for testing instructions when necessary
 
 # Security Boundaries

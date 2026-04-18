@@ -1,9 +1,32 @@
 from fastmcp import Context
 from fastmcp.tools.tool import ToolResult
+import json
 
 from config import config
 from productive_client import client, ProductiveAPIError
 from utils import filter_response, filter_task_list_response, filter_page_list_response
+from toon import encode as toon_encode
+
+
+def _build_tool_result(data: object) -> ToolResult:
+    """Convert tool payloads into explicit FastMCP 3 ToolResult objects."""
+    if isinstance(data, ToolResult):
+        return data
+
+    if isinstance(data, str):
+        return ToolResult(content=data)
+
+    serialized_output: str
+    if config.output_format == "toon":
+        try:
+            serialized_output = toon_encode(data)
+        except Exception:
+            serialized_output = json.dumps(data, indent=2, ensure_ascii=False)
+    else:
+        serialized_output = json.dumps(data, indent=2, ensure_ascii=False)
+
+    structured_content = data if isinstance(data, dict) else None
+    return ToolResult(content=serialized_output, structured_content=structured_content)
 
 
 async def _handle_productive_api_error(ctx: Context, e: ProductiveAPIError, resource_type: str = "data") -> None:
@@ -39,7 +62,7 @@ async def get_projects(ctx: Context) -> ToolResult:
         await ctx.info("Successfully retrieved projects")
         filtered = filter_response(result)
 
-        return filtered
+        return _build_tool_result(filtered)
 
     except ProductiveAPIError as e:
         await _handle_productive_api_error(ctx, e, "projects")
@@ -86,7 +109,7 @@ async def get_tasks(
         await ctx.info("Successfully retrieved tasks")
 
         filtered = filter_task_list_response(result)
-        return filtered
+        return _build_tool_result(filtered)
 
     except ProductiveAPIError as e:
         await _handle_productive_api_error(ctx, e, "tasks")
@@ -127,7 +150,7 @@ async def get_task(ctx: Context, task_id: int) -> ToolResult:
                 if field not in attributes or attributes[field] is None:
                     attributes[field] = default_value
         
-        return filtered
+        return _build_tool_result(filtered)
         
     except ProductiveAPIError as e:
         await _handle_productive_api_error(ctx, e, f"task {task_id}")
@@ -169,13 +192,13 @@ async def get_project_tasks(
         
         if not result.get("data") or len(result["data"]) == 0:
             await ctx.info(f"No tasks found for project {project_id}")
-            return {"data": [], "meta": {"message": f"No tasks found for project {project_id}"}}
+            return _build_tool_result({"data": [], "meta": {"message": f"No tasks found for project {project_id}"}})
         
         # Use lighter filtering for task lists - removes descriptions and relationships
         filtered = filter_task_list_response(result)
         await ctx.info(f"Successfully retrieved {len(result['data'])} tasks for project {project_id}")
         
-        return filtered
+        return _build_tool_result(filtered)
         
     except ProductiveAPIError as e:
         await _handle_productive_api_error(ctx, e, f"tasks for project {project_id}")
@@ -218,7 +241,7 @@ async def get_project_task(
         filtered = filter_response({"data": task_data})
         await ctx.info(f"Successfully retrieved task #{task_number}")
         
-        return filtered
+        return _build_tool_result(filtered)
         
     except ProductiveAPIError as e:
         await _handle_productive_api_error(ctx, e, f"task #{task_number}")
@@ -265,7 +288,7 @@ async def get_comments(
 
         filtered = filter_response(result)
 
-        return filtered
+        return _build_tool_result(filtered)
 
     except ProductiveAPIError as e:
         await _handle_productive_api_error(ctx, e, "comments")
@@ -283,7 +306,7 @@ async def get_comment(ctx: Context, comment_id: int) -> ToolResult:
         
         filtered = filter_response(result)
         
-        return filtered
+        return _build_tool_result(filtered)
         
     except ProductiveAPIError as e:
         await _handle_productive_api_error(ctx, e, f"comment {comment_id}")
@@ -324,7 +347,7 @@ async def get_todos(
         
         filtered = filter_response(result)
         
-        return filtered
+        return _build_tool_result(filtered)
         
     except ProductiveAPIError as e:
         await _handle_productive_api_error(ctx, e, "todos")
@@ -342,7 +365,7 @@ async def get_todo(ctx: Context, todo_id: int) -> ToolResult:
         
         filtered = filter_response(result)
         
-        return filtered
+        return _build_tool_result(filtered)
         
     except ProductiveAPIError as e:
         await _handle_productive_api_error(ctx, e, f"todo {todo_id}")
@@ -417,7 +440,7 @@ async def get_recent_activity(
         
         if not result.get("data") or len(result["data"]) == 0:
             await ctx.info("No recent activities found")
-            return {
+            return _build_tool_result({
                 "data": [],
                 "meta": {
                     "message": f"No activities found in the last {hours} hours",
@@ -425,7 +448,7 @@ async def get_recent_activity(
                     "filters_applied": _get_applied_filters(params),
                     "cutoff_time": after_date
                 }
-            }
+            })
         
         filtered = filter_response(result)
         
@@ -441,7 +464,7 @@ async def get_recent_activity(
         
         await ctx.info(f"Successfully retrieved {len(result['data'])} recent activities")
         
-        return filtered
+        return _build_tool_result(filtered)
         
     except ProductiveAPIError as e:
         await _handle_productive_api_error(ctx, e, "activities")
@@ -486,14 +509,14 @@ async def get_task_history(
 
         if not task_result.get("data"):
             await ctx.error(f"Task {task_id} not found")
-            return {
+            return _build_tool_result({
                 "task_id": task_id,
                 "error": "Task not found",
                 "status_history": [],
                 "assignment_history": [],
                 "milestones": [],
                 "activity_summary": {}
-            }
+            })
 
         # Get recent activities for this task (comprehensive history)
         activity_result = await get_recent_activity(
@@ -569,7 +592,7 @@ async def get_task_history(
         }
 
         await ctx.info(f"Successfully retrieved history for task {task_id}")
-        return history_response
+        return _build_tool_result(history_response)
 
     except ProductiveAPIError as e:
         await _handle_productive_api_error(ctx, e, f"task history for {task_id}")
@@ -644,7 +667,7 @@ async def get_pages(
         # For lists, remove heavy fields like body explicitly
         filtered = filter_page_list_response(result)
         
-        return filtered
+        return _build_tool_result(filtered)
         
     except ProductiveAPIError as e:
         await _handle_productive_api_error(ctx, e, "pages")
@@ -667,7 +690,7 @@ async def get_page(ctx: Context, page_id: int) -> ToolResult:
         
         filtered = filter_response(result)
         
-        return filtered
+        return _build_tool_result(filtered)
         
     except ProductiveAPIError as e:
         await _handle_productive_api_error(ctx, e, f"page {page_id}")
@@ -702,7 +725,7 @@ async def get_attachments(
         
         filtered = filter_response(result)
         
-        return filtered
+        return _build_tool_result(filtered)
         
     except ProductiveAPIError as e:
         await _handle_productive_api_error(ctx, e, "attachments")
@@ -720,7 +743,7 @@ async def get_attachment(ctx: Context, attachment_id: int) -> ToolResult:
 
         filtered = filter_response(result)
 
-        return filtered
+        return _build_tool_result(filtered)
 
     except ProductiveAPIError as e:
         await _handle_productive_api_error(ctx, e, f"attachment {attachment_id}")
@@ -750,7 +773,7 @@ async def get_people(ctx: Context, page_number: int = None, page_size: int = con
 
         filtered = filter_response(result)
 
-        return filtered
+        return _build_tool_result(filtered)
 
     except ProductiveAPIError as e:
         await _handle_productive_api_error(ctx, e, "people")
@@ -774,7 +797,7 @@ async def get_person(ctx: Context, person_id: int) -> ToolResult:
 
         filtered = filter_response(result)
 
-        return filtered
+        return _build_tool_result(filtered)
 
     except ProductiveAPIError as e:
         await _handle_productive_api_error(ctx, e, f"person {person_id}")
@@ -871,7 +894,7 @@ async def quick_search(
             
             filtered_data.append(filtered_item)
 
-        return {
+        return _build_tool_result({
             "data": filtered_data,
             "meta": {
                 "query": query,
@@ -881,24 +904,24 @@ async def quick_search(
                 "per_page": per_page,
                 "total_results": len(filtered_data)
             }
-        }
+        })
 
     except ProductiveAPIError as e:
         await ctx.error(f"Quick search failed: {e.message}")
-        return {
+        return _build_tool_result({
             "data": [],
             "meta": {
                 "error": str(e),
                 "status_code": e.status_code,
                 "query": query
             }
-        }
+        })
     except Exception as e:
         await ctx.error(f"Unexpected error during quick search: {str(e)}")
-        return {
+        return _build_tool_result({
             "data": [],
             "meta": {
                 "error": str(e),
                 "query": query
             }
-        }
+        })

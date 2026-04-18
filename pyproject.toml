@@ -6,9 +6,10 @@ build-backend = "setuptools.build_meta"
 name = "productive-mcp"
 version = "0.3.0"
 description = "Simple MCP server to access the Productive API (activity,projects, pages, tasks, comments, todo-lists)."
-readme = "README.md"
+readme = {file = "README.md", content-type = "text/markdown"}
 requires-python = ">=3.10"
 license = "MIT"
+license-files = ["LICENSE"]
 authors = [
     {name = "druellan", email = "dario.ruellan@gmail.com"}
 ]
@@ -24,16 +25,25 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Topic :: Utilities"
 ]
-dependencies = [
+dependencies = [ 
     "fastmcp>=3.2.4",
     "httpx>=0.28.1",
     "bleach>=6.0.0",
     "python-toon>=0.1.0",
 ]
 
+[project.optional-dependencies]
+dev = [
+    "ruff>=0.9.0",
+]
+
 [project.scripts]
-productive-mcp = "server:mcp"
+productive-mcp = "server:main"
+
+[project.urls]
+Homepage = "https://github.com/druellan/productive-mcp"
+Repository = "https://github.com/druellan/productive-mcp"
+Documentation = "https://github.com/druellan/productive-mcp#readme"
 
 [tool.setuptools]
-package-dir = {"" = "."}
 py-modules = ["server", "config", "productive_client", "tools", "utils"]

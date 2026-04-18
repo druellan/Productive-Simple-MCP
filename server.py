@@ -14,31 +14,6 @@ from config import config
 from productive_client import client
 import tools
 from contextlib import asynccontextmanager
-import json
-from toon import encode as toon_encode
-
-
-def output_serializer(data: Any) -> str:
-    """Serialize tool output based on OUTPUT_FORMAT configuration.
-
-    Args:
-        data: The data to serialize
-
-    Returns:
-        Serialized string in the configured format (TOON or JSON)
-    """
-    if isinstance(data, str):
-        # Don't serialize strings that are already formatted
-        return data
-
-    if config.output_format == "toon":
-        try:
-            return toon_encode(data)
-        except Exception:
-            pass
-
-    # Default to JSON
-    return json.dumps(data, indent=2, ensure_ascii=False)
 
 
 @asynccontextmanager
@@ -67,10 +42,7 @@ mcp = FastMCP(
     ),
     version="0.3.0",
     lifespan=lifespan,
-    on_duplicate_tools="warn",
-    on_duplicate_resources="warn",
-    on_duplicate_prompts="warn",
-    tool_serializer=output_serializer,
+    on_duplicate="warn",
 )
 
 
@@ -589,5 +561,10 @@ async def get_attachments(
     )
 
 
-if __name__ == "__main__":
+def main() -> None:
+    """Run the MCP server using the configured default transport."""
     mcp.run()
+
+
+if __name__ == "__main__":
+    main()
