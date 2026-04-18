@@ -2,7 +2,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 ![](https://badge.mcpx.dev?type=server&features=tools 'MCP server with features')
 
-A Model Context Protocol (MCP) server for integrating Productive.io into AI workflows. This server allows AI assistants and tools to access projects, tasks, pages and teams. Built with [FastMCP](https://gofastmcp.com/).
+A Model Context Protocol (MCP) server for integrating Productive.io into AI workflows. This server allows AI assistants and tools to access projects, folders, tasks, pages and teams. Built with [FastMCP](https://gofastmcp.com/).
 
 This implementation is tailored for read-only operations, providing streamlined access to essential data while minimizing token consumption using TOON as output. It is optimized for efficiency and simplicity, exposing only the necessary information. For a more comprehensive solution, consider BerwickGeek's implementation: [Productive MCP by BerwickGeek](https://github.com/berwickgeek/productive-mcp).
 
@@ -13,6 +13,8 @@ This implementation is tailored for read-only operations, providing streamlined 
 ## Features
 
 - **Get Projects**: Retrieve all projects with basic information
+- **List Folders**: Retrieve folders within a project
+- **Get Folder**: Retrieve a specific folder by ID
 - **Get Tasks**: Retrieve tasks with filtering and pagination
 - **Get Task**: Retrieve a specific task by internal ID
 - **Get Comments**: Retrieve comments with filtering
@@ -91,6 +93,24 @@ Retrieve all projects with basic information.
 
 **Properties:**
 - No parameters (returns all projects)
+
+### `list_folders`
+Retrieve folders within a specific project.
+
+Productive's API exposes these resources through the `/folders` endpoint.
+
+**Properties:**
+- `project_id` (int, required): Filter folders by Productive project ID
+- `status` (int, optional): Folder status filter (`1` active, `2` archived). Defaults to `1`
+- `limit` (int, optional): Maximum number of folders to return (default: 50, max: 200)
+
+### `get_folder`
+Retrieve a specific folder by its ID.
+
+Productive's API exposes this resource through the `/folders` endpoint.
+
+**Properties:**
+- `folder_id` (int): The unique Productive folder identifier
 
 ### `get_tasks`
 Retrieve tasks with optional filtering and pagination.

@@ -34,7 +34,7 @@ async def lifespan(server):
 mcp = FastMCP(
     name="Productive MCP Server",
     instructions=(
-        "Access Productive.io data: projects, tasks, pages, comments, todos, people."
+        "Access Productive.io data: projects, folders, tasks, pages, comments, todos, people."
         "Use quick_search for general queries, get_recent_activity for team updates, get_task for specific tasks."
         "Use get_task_history for comprehensive task history including status changes, assignments, and milestones."
         "Use get_people to list team members and get_person for individual details."
@@ -168,6 +168,50 @@ async def get_projects(ctx: Context) -> Dict[str, Any]:
     - Webapp URL for direct access
     """
     return await tools.get_projects(ctx)
+
+
+@mcp.tool
+async def list_folders(
+    ctx: Context,
+    project_id: Annotated[
+        int, Field(description="Productive project ID to list folders for")
+    ],
+    status: Annotated[
+        int,
+        Field(description="Folder status filter: 1 = active, 2 = archived"),
+    ] = 1,
+    limit: Annotated[
+        int, Field(description="Maximum number of folders to return (max 200)")
+    ] = config.items_per_page,
+) -> Dict[str, Any]:
+    """List folders in a project.
+
+    Productive exposes folders through the `/folders` endpoint.
+
+    Returns folder data including:
+    - Folder ID and name
+    - Archived status
+    - Position/order within the project
+    - Hidden flag and project relationship
+    """
+    return await tools.list_folders(
+        ctx,
+        project_id=project_id,
+        status=status,
+        limit=limit,
+    )
+
+
+@mcp.tool
+async def get_folder(
+    ctx: Context,
+    folder_id: Annotated[int, Field(description="Productive folder ID")],
+) -> Dict[str, Any]:
+    """Get folder details by folder ID.
+
+    Productive exposes folders through the `/folders` endpoint.
+    """
+    return await tools.get_folder(ctx, folder_id)
 
 
 @mcp.tool

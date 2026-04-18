@@ -30,6 +30,17 @@ class ProductiveClient:
             error_data = response.json()
             message = error_data.get("message", default_message)
             error_code = error_data.get("errorCode", "UNKNOWN")
+
+            if not message and isinstance(error_data.get("errors"), list) and error_data["errors"]:
+                first_error = error_data["errors"][0]
+                message = first_error.get("detail") or first_error.get("title") or default_message
+                error_code = first_error.get("code", error_code)
+
+            # Enhance generic error messages with HTTP status
+            if message == "Server error" or not message:
+                message = f"HTTP {response.status_code}: {message or default_message}"
+            elif f"HTTP {response.status_code}" not in message:
+                message = f"{message} (HTTP {response.status_code})"
             return message, error_code
         except Exception:
             return f"HTTP {response.status_code}: {response.text}", "UNKNOWN"
@@ -67,12 +78,12 @@ class ProductiveClient:
                     continue
 
                 # Final attempt or non-retryable 4xx error
-                message, error_code = self._parse_error_response(
-                    response,
+                default_msg = (
                     "Rate limit exceeded"
                     if response.status_code == 429
-                    else "Server error",
+                    else f"Server error (HTTP {response.status_code})"
                 )
+                message, error_code = self._parse_error_response(response, default_msg)
                 raise ProductiveAPIError(message, response.status_code, error_code)
 
             except httpx.RequestError as e:
@@ -146,6 +157,14 @@ class ProductiveClient:
     async def get_person(self, person_id: int) -> Dict[str, Any]:
         """Get person by ID"""
         return await self._request("GET", f"/people/{str(person_id)}")
+
+    async def get_folders(self, params: Optional[dict] = None) -> Dict[str, Any]:
+        """Get all folders."""
+        return await self._request("GET", "/folders", params=params)
+
+    async def get_folder(self, folder_id: int) -> Dict[str, Any]:
+        """Get folder by ID."""
+        return await self._request("GET", f"/folders/{str(folder_id)}")
 
     async def quick_search(
         self,

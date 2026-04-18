@@ -71,6 +71,69 @@ async def get_projects(ctx: Context) -> ToolResult:
         raise e
 
 
+async def list_folders(
+    ctx: Context,
+    project_id: int,
+    status: int = 1,
+    limit: int = config.items_per_page,
+) -> ToolResult:
+    """List project folders via Productive's folders endpoint.
+
+    Developer notes:
+    - Productive's API uses `/folders` endpoint for folder resources.
+    - project_id is required because folders are project-scoped.
+    - status maps to Productive filter[status]: 1=active, 2=archived.
+    - limit is passed as page[size] and capped by the API at 200.
+    """
+    try:
+        if limit > 200:
+            await ctx.warning("limit exceeds API max of 200, using 200")
+            limit = 200
+
+        await ctx.info(f"Fetching folders for project {project_id}")
+        params = {
+            "filter[project_id]": project_id,
+            "page[size]": limit,
+        }
+
+        if status is not None:
+            params["filter[status]"] = status
+
+        result = await client.get_folders(params=params)
+        await ctx.info("Successfully retrieved folders")
+
+        filtered = filter_response(result)
+        return _build_tool_result(filtered)
+
+    except ProductiveAPIError as e:
+        await _handle_productive_api_error(ctx, e, f"folders for project {project_id}")
+    except Exception as e:
+        await ctx.error(f"Unexpected error fetching folders: {str(e)}")
+        raise e
+
+
+async def get_folder(ctx: Context, folder_id: int) -> ToolResult:
+    """Fetch a single folder by ID via Productive's folders endpoint.
+
+    Developer notes:
+    - Productive's API uses `/folders` endpoint for folder resources.
+    - Applies utils.filter_response to sanitize output.
+    """
+    try:
+        await ctx.info(f"Fetching folder with ID: {folder_id}")
+        result = await client.get_folder(folder_id)
+        await ctx.info("Successfully retrieved folder")
+
+        filtered = filter_response(result)
+        return _build_tool_result(filtered)
+
+    except ProductiveAPIError as e:
+        await _handle_productive_api_error(ctx, e, f"folder {folder_id}")
+    except Exception as e:
+        await ctx.error(f"Unexpected error fetching folder: {str(e)}")
+        raise e
+
+
 async def get_tasks(
     ctx: Context,
     page_number: int = None,
