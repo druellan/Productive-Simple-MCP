@@ -1,32 +1,11 @@
 from fastmcp import Context
 from fastmcp.tools.tool import ToolResult
-import json
+from typing import Any, Dict
 
 from config import config
 from productive_client import client, ProductiveAPIError
 from utils import filter_response, filter_task_list_response, filter_page_list_response
-from toon import encode as toon_encode
 
-
-def _build_tool_result(data: object) -> ToolResult:
-    """Convert tool payloads into explicit FastMCP 3 ToolResult objects."""
-    if isinstance(data, ToolResult):
-        return data
-
-    if isinstance(data, str):
-        return ToolResult(content=data)
-
-    serialized_output: str
-    if config.output_format == "toon":
-        try:
-            serialized_output = toon_encode(data)
-        except Exception:
-            serialized_output = json.dumps(data, indent=2, ensure_ascii=False)
-    else:
-        serialized_output = json.dumps(data, indent=2, ensure_ascii=False)
-
-    structured_content = data if isinstance(data, dict) else None
-    return ToolResult(content=serialized_output, structured_content=structured_content)
 
 
 async def _handle_productive_api_error(ctx: Context, e: ProductiveAPIError, resource_type: str = "data") -> None:
@@ -47,36 +26,12 @@ async def _handle_productive_api_error(ctx: Context, e: ProductiveAPIError, reso
     raise e
 
 
-async def get_projects(ctx: Context) -> ToolResult:
-    """Fetch projects and post-process response for LLM safety.
-
-    Developer notes:
-    - Wraps client.get_projects(); sorts by most recent activity first.
-    - Applies utils.filter_response to strip noise and add webapp_url.
-    - Raises ProductiveAPIError on API failure; errors are logged via ctx.
-    """
-    try:
-        await ctx.info("Fetching all projects")
-        params = {"sort": "-last_activity_at"}
-        result = await client.get_projects(params=params)
-        await ctx.info("Successfully retrieved projects")
-        filtered = filter_response(result)
-
-        return _build_tool_result(filtered)
-
-    except ProductiveAPIError as e:
-        await _handle_productive_api_error(ctx, e, "projects")
-    except Exception as e:
-        await ctx.error(f"Unexpected error fetching projects: {str(e)}")
-        raise e
-
-
 async def list_folders(
     ctx: Context,
     project_id: int,
     status: int = 1,
     limit: int = config.items_per_page,
-) -> ToolResult:
+) -> Dict[str, Any]:
     """List project folders via Productive's folders endpoint.
 
     Developer notes:
@@ -103,7 +58,7 @@ async def list_folders(
         await ctx.info("Successfully retrieved folders")
 
         filtered = filter_response(result)
-        return _build_tool_result(filtered)
+        return filtered
 
     except ProductiveAPIError as e:
         await _handle_productive_api_error(ctx, e, f"folders for project {project_id}")
@@ -112,7 +67,7 @@ async def list_folders(
         raise e
 
 
-async def get_folder(ctx: Context, folder_id: int) -> ToolResult:
+async def get_folder(ctx: Context, folder_id: int) -> Dict[str, Any]:
     """Fetch a single folder by ID via Productive's folders endpoint.
 
     Developer notes:
@@ -125,7 +80,7 @@ async def get_folder(ctx: Context, folder_id: int) -> ToolResult:
         await ctx.info("Successfully retrieved folder")
 
         filtered = filter_response(result)
-        return _build_tool_result(filtered)
+        return filtered
 
     except ProductiveAPIError as e:
         await _handle_productive_api_error(ctx, e, f"folder {folder_id}")
@@ -139,7 +94,7 @@ async def list_workflow_statuses(
     workflow_id: int = None,
     category_id: int = None,
     limit: int = config.items_per_page,
-) -> ToolResult:
+) -> Dict[str, Any]:
     """List workflow statuses with optional workflow/category filters.
 
     Developer notes:
@@ -172,7 +127,7 @@ async def list_workflow_statuses(
         await ctx.info("Successfully retrieved workflow statuses")
 
         filtered = filter_response(result)
-        return _build_tool_result(filtered)
+        return filtered
 
     except ProductiveAPIError as e:
         await _handle_productive_api_error(ctx, e, "workflow statuses")
@@ -192,7 +147,7 @@ async def list_time_entries(
     service_id: int = None,
     page_number: int = None,
     limit: int = config.items_per_page,
-) -> ToolResult:
+) -> Dict[str, Any]:
     """List time entries with optional date and relationship filters.
 
     Developer notes:
@@ -240,7 +195,7 @@ async def list_time_entries(
         await ctx.info("Successfully retrieved time entries")
 
         filtered = filter_response(result)
-        return _build_tool_result(filtered)
+        return filtered
 
     except ProductiveAPIError as e:
         await _handle_productive_api_error(ctx, e, "time entries")
@@ -249,15 +204,31 @@ async def list_time_entries(
         raise e
 
 
-async def get_tasks(
-    ctx: Context,
-    page_number: int = None,
-    page_size: int = config.items_per_page,
-    sort: str = "-last_activity_at",
-    project_id: int = None,
-    user_id: int = None,
-    extra_filters: dict = None
-) -> ToolResult:
+async def get_projects(ctx: Context) -> ToolResult:
+    """Fetch projects and post-process response for LLM safety.
+
+    Developer notes:
+    - Wraps client.get_projects(); sorts by most recent activity first.
+    - Applies utils.filter_response to strip noise and add webapp_url.
+    - Raises ProductiveAPIError on API failure; errors are logged via ctx.
+    """
+    try:
+        await ctx.info("Fetching all projects")
+        params = {"sort": "-last_activity_at"}
+        result = await client.get_projects(params=params)
+        await ctx.info("Successfully retrieved projects")
+        filtered = filter_response(result)
+
+        return filtered
+
+    except ProductiveAPIError as e:
+        await _handle_productive_api_error(ctx, e, "projects")
+    except Exception as e:
+        await ctx.error(f"Unexpected error fetching projects: {str(e)}")
+        raise e
+
+
+async def get_tasks(ctx: Context, page_number: int = None, page_size: int = config.items_per_page, sort: str = "-last_activity_at", project_id: int = None, user_id: int = None, extra_filters: dict = None) -> ToolResult:
     """
     List tasks with optional filters and pagination.
 
@@ -287,7 +258,7 @@ async def get_tasks(
         await ctx.info("Successfully retrieved tasks")
 
         filtered = filter_task_list_response(result)
-        return _build_tool_result(filtered)
+        return filtered
 
     except ProductiveAPIError as e:
         await _handle_productive_api_error(ctx, e, "tasks")
@@ -309,27 +280,22 @@ async def get_task(ctx: Context, task_id: int) -> ToolResult:
         await ctx.info(f"Fetching task with ID: {task_id}")
         result = await client.get_task(task_id)
         await ctx.info("Successfully retrieved task")
-        
+
         filtered = filter_response(result)
-        
+
         # Ensure time tracking fields are always present at the top level
         if "data" in filtered and "attributes" in filtered["data"]:
             attributes = filtered["data"]["attributes"]
-            
+
             # Set default values for time tracking fields if missing
-            time_fields = {
-                "initial_estimate": 0,
-                "worked_time": 0,
-                "billable_time": 0,
-                "remaining_time": 0
-            }
-            
+            time_fields = {"initial_estimate": 0, "worked_time": 0, "billable_time": 0, "remaining_time": 0}
+
             for field, default_value in time_fields.items():
                 if field not in attributes or attributes[field] is None:
                     attributes[field] = default_value
-        
-        return _build_tool_result(filtered)
-        
+
+        return filtered
+
     except ProductiveAPIError as e:
         await _handle_productive_api_error(ctx, e, f"task {task_id}")
     except Exception as e:
@@ -337,11 +303,7 @@ async def get_task(ctx: Context, task_id: int) -> ToolResult:
         raise e
 
 
-async def get_project_tasks(
-    ctx: Context,
-    project_id: int,
-    status: int = None
-) -> ToolResult:
+async def get_project_tasks(ctx: Context, project_id: int, status: int = None) -> ToolResult:
     """List tasks for a project with an optional status filter.
 
     Developer notes:
@@ -353,31 +315,31 @@ async def get_project_tasks(
     """
     try:
         await ctx.info(f"Fetching all tasks for project {project_id}")
-        
+
         # Get all tasks for the project with a high limit
         params = {
             "filter[project_id][eq]": project_id,
-            "page[size]": config.items_per_page  # Configurable limit for comprehensive view
+            "page[size]": config.items_per_page,  # Configurable limit for comprehensive view
         }
-        
+
         # Status filter: 1 = open, 2 = closed (per Productive API docs)
         if status is not None:
             params["filter[status][eq]"] = status
-        
+
         params["sort"] = "-last_activity_at"
-        
+
         result = await client.get_tasks(params=params)
-        
+
         if not result.get("data") or len(result["data"]) == 0:
             await ctx.info(f"No tasks found for project {project_id}")
-            return _build_tool_result({"data": [], "meta": {"message": f"No tasks found for project {project_id}"}})
-        
+            return {"data": [], "meta": {"message": f"No tasks found for project {project_id}"}}
+
         # Use lighter filtering for task lists - removes descriptions and relationships
         filtered = filter_task_list_response(result)
         await ctx.info(f"Successfully retrieved {len(result['data'])} tasks for project {project_id}")
-        
-        return _build_tool_result(filtered)
-        
+
+        return filtered
+
     except ProductiveAPIError as e:
         await _handle_productive_api_error(ctx, e, f"tasks for project {project_id}")
     except Exception as e:
@@ -385,11 +347,7 @@ async def get_project_tasks(
         raise e
 
 
-async def get_project_task(
-    ctx: Context,
-    task_number: str,
-    project_id: int
-) -> ToolResult:
+async def get_project_task(ctx: Context, task_number: str, project_id: int) -> ToolResult:
     """Fetch a task by its project-scoped task_number.
 
     Developer notes:
@@ -399,28 +357,22 @@ async def get_project_task(
     """
     try:
         await ctx.info(f"Fetching task #{task_number} from project {project_id}")
-        
+
         # Get tasks for the project filtered by task_number
-        params = {
-            "filter[project_id][eq]": project_id,
-            "filter[task_number][eq]": task_number
-        }
-        
+        params = {"filter[project_id][eq]": project_id, "filter[task_number][eq]": task_number}
+
         result = await client.get_tasks(params=params)
-        
+
         if not result.get("data") or len(result["data"]) == 0:
-            raise ProductiveAPIError(
-                message=f"Task #{task_number} not found in project {project_id}",
-                status_code=404
-            )
-        
+            raise ProductiveAPIError(message=f"Task #{task_number} not found in project {project_id}", status_code=404)
+
         # Return the first (and should be only) task
         task_data = result["data"][0]
         filtered = filter_response({"data": task_data})
         await ctx.info(f"Successfully retrieved task #{task_number}")
-        
-        return _build_tool_result(filtered)
-        
+
+        return filtered
+
     except ProductiveAPIError as e:
         await _handle_productive_api_error(ctx, e, f"task #{task_number}")
     except Exception as e:
@@ -428,14 +380,7 @@ async def get_project_task(
         raise e
 
 
-async def get_comments(
-    ctx: Context,
-    project_id: int = None,
-    task_id: int = None,
-    page_number: int = None,
-    page_size: int = config.items_per_page,
-    extra_filters: dict = None
-) -> ToolResult:
+async def get_comments(ctx: Context, project_id: int = None, task_id: int = None, page_number: int = None, page_size: int = config.items_per_page, extra_filters: dict = None) -> ToolResult:
     """List comments with optional filters and pagination.
 
     Developer notes:
@@ -466,7 +411,7 @@ async def get_comments(
 
         filtered = filter_response(result)
 
-        return _build_tool_result(filtered)
+        return filtered
 
     except ProductiveAPIError as e:
         await _handle_productive_api_error(ctx, e, "comments")
@@ -481,11 +426,11 @@ async def get_comment(ctx: Context, comment_id: int) -> ToolResult:
         await ctx.info(f"Fetching comment with ID: {comment_id}")
         result = await client.get_comment(comment_id)
         await ctx.info("Successfully retrieved comment")
-        
+
         filtered = filter_response(result)
-        
-        return _build_tool_result(filtered)
-        
+
+        return filtered
+
     except ProductiveAPIError as e:
         await _handle_productive_api_error(ctx, e, f"comment {comment_id}")
     except Exception as e:
@@ -493,13 +438,7 @@ async def get_comment(ctx: Context, comment_id: int) -> ToolResult:
         raise e
 
 
-async def get_todos(
-    ctx: Context,
-    task_id: int = None,
-    page_number: int = None,
-    page_size: int = config.items_per_page,
-    extra_filters: dict = None
-) -> ToolResult:
+async def get_todos(ctx: Context, task_id: int = None, page_number: int = None, page_size: int = config.items_per_page, extra_filters: dict = None) -> ToolResult:
     """List todo checklist items with optional filters.
 
     Developer notes:
@@ -522,11 +461,11 @@ async def get_todos(
 
         result = await client.get_todos(params=params if params else None)
         await ctx.info("Successfully retrieved todos")
-        
+
         filtered = filter_response(result)
-        
-        return _build_tool_result(filtered)
-        
+
+        return filtered
+
     except ProductiveAPIError as e:
         await _handle_productive_api_error(ctx, e, "todos")
     except Exception as e:
@@ -540,11 +479,11 @@ async def get_todo(ctx: Context, todo_id: int) -> ToolResult:
         await ctx.info(f"Fetching todo with ID: {todo_id}")
         result = await client.get_todo(todo_id)
         await ctx.info("Successfully retrieved todo")
-        
+
         filtered = filter_response(result)
-        
-        return _build_tool_result(filtered)
-        
+
+        return filtered
+
     except ProductiveAPIError as e:
         await _handle_productive_api_error(ctx, e, f"todo {todo_id}")
     except Exception as e:
@@ -552,17 +491,7 @@ async def get_todo(ctx: Context, todo_id: int) -> ToolResult:
         raise e
 
 
-async def get_recent_activity(
-    ctx: Context,
-    hours: int = 24,
-    user_id: int = None,
-    project_id: int = None,
-    activity_type: int = None,
-    item_type: str = None,
-    event_type: str = None,
-    task_id: int = None,
-    max_results: int = None
-) -> ToolResult:
+async def get_recent_activity(ctx: Context, hours: int = 24, user_id: int = None, project_id: int = None, activity_type: int = None, item_type: str = None, event_type: str = None, task_id: int = None, max_results: int = None) -> ToolResult:
     """Summarize recent activities within a time window.
 
     Developer notes:
@@ -582,68 +511,52 @@ async def get_recent_activity(
         if max_results > 200:
             await ctx.warning("max_results exceeds API limit of 200, using 200")
             max_results = 200
-        
+
         # Calculate the cutoff time
         cutoff_time = datetime.utcnow() - timedelta(hours=hours)
         after_date = cutoff_time.isoformat() + "Z"
-        
+
         await ctx.info(f"Fetching activities from the last {hours} hours")
-        
+
         # Build comprehensive filter params
-        params = {
-            "filter[after]": after_date,
-            "page[size]": max_results
-        }
-        
+        params = {"filter[after]": after_date, "page[size]": max_results}
+
         # Apply optional filters
         if user_id:
             params["filter[person_id]"] = user_id
-            
+
         if project_id:
             params["filter[project_id]"] = project_id
-            
+
         if activity_type:
             params["filter[type]"] = activity_type
-            
+
         if item_type:
             params["filter[item_type]"] = item_type
-            
+
         if event_type:
             params["filter[event]"] = event_type
-            
+
         if task_id:
             params["filter[task_id]"] = task_id
-        
+
         result = await client.get_activities(params=params)
-        
+
         if not result.get("data") or len(result["data"]) == 0:
             await ctx.info("No recent activities found")
-            return _build_tool_result({
-                "data": [],
-                "meta": {
-                    "message": f"No activities found in the last {hours} hours",
-                    "hours": hours,
-                    "filters_applied": _get_applied_filters(params),
-                    "cutoff_time": after_date
-                }
-            })
-        
+            return {"data": [], "meta": {"message": f"No activities found in the last {hours} hours", "hours": hours, "filters_applied": _get_applied_filters(params), "cutoff_time": after_date}}
+
         filtered = filter_response(result)
-        
+
         # Enhance metadata with activity summary
         activity_summary = _summarize_activities(filtered.get("data", []))
         filtered["meta"] = filtered.get("meta", {})
-        filtered["meta"].update({
-            "activity_summary": activity_summary,
-            "total_activities": len(filtered.get("data", [])),
-            "filters_applied": _get_applied_filters(params),
-            "cutoff_time": after_date
-        })
-        
+        filtered["meta"].update({"activity_summary": activity_summary, "total_activities": len(filtered.get("data", [])), "filters_applied": _get_applied_filters(params), "cutoff_time": after_date})
+
         await ctx.info(f"Successfully retrieved {len(result['data'])} recent activities")
-        
-        return _build_tool_result(filtered)
-        
+
+        return filtered
+
     except ProductiveAPIError as e:
         await _handle_productive_api_error(ctx, e, "activities")
     except Exception as e:
@@ -654,22 +567,22 @@ async def get_recent_activity(
 def _get_applied_filters(params: dict) -> dict:
     """Extract and format the filters that were actually applied."""
     applied_filters = {}
-    
+
     # Remove pagination and standard params
     filter_params = {k: v for k, v in params.items() if k.startswith("filter[")}
-    
+
     for key, value in filter_params.items():
         # Extract filter name from key like "filter[person_id]"
         filter_name = key.replace("filter[", "").replace("]", "")
         applied_filters[filter_name] = value
-    
+
     return applied_filters
 
 
 async def get_task_history(
     ctx: Context,
     task_id: int,
-    hours: int = 720  # Default to 30 days for comprehensive history
+    hours: int = 720,  # Default to 30 days for comprehensive history
 ) -> ToolResult:
     """Get comprehensive history for a specific task.
 
@@ -687,21 +600,14 @@ async def get_task_history(
 
         if not task_result.get("data"):
             await ctx.error(f"Task {task_id} not found")
-            return _build_tool_result({
-                "task_id": task_id,
-                "error": "Task not found",
-                "status_history": [],
-                "assignment_history": [],
-                "milestones": [],
-                "activity_summary": {}
-            })
+            return {"task_id": task_id, "error": "Task not found", "status_history": [], "assignment_history": [], "milestones": [], "activity_summary": {}}
 
         # Get recent activities for this task (comprehensive history)
         activity_result = await get_recent_activity(
             ctx,
             hours=hours,
             task_id=task_id,
-            max_results=200  # Maximum allowed by API
+            max_results=200,  # Maximum allowed by API
         )
 
         activities = activity_result.get("data", [])
@@ -725,11 +631,7 @@ async def get_task_history(
                     if "workflow_status_id" in change:
                         status_from = change["workflow_status_id"][0]["value"] if len(change["workflow_status_id"]) > 0 else None
                         status_to = change["workflow_status_id"][1]["value"] if len(change["workflow_status_id"]) > 1 else None
-                        status_history.append({
-                            "from": status_from,
-                            "to": status_to,
-                            "changed_at": created_at
-                        })
+                        status_history.append({"from": status_from, "to": status_to, "changed_at": created_at})
 
             # Assignment changes (parse assignee in changeset)
             if item_type and item_type.lower() == "task" and event_type in ["update", "edit"]:
@@ -737,18 +639,11 @@ async def get_task_history(
                     if "assignee" in change:
                         # The changeset shows the new assignee only
                         assignee_to = change["assignee"][0]["value"] if len(change["assignee"]) > 0 else None
-                        assignment_history.append({
-                            "assigned_to": assignee_to,
-                            "changed_at": created_at
-                        })
+                        assignment_history.append({"assigned_to": assignee_to, "changed_at": created_at})
 
             # Milestones (comments with milestone keywords or custom fields)
             if item_type and item_type.lower() == "comment" and "milestone" in attributes.get("item_name", "").lower():
-                milestones.append({
-                    "milestone": attributes.get("item_name", "Milestone"),
-                    "completed_at": created_at,
-                    "completed_by": person_name
-                })
+                milestones.append({"milestone": attributes.get("item_name", "Milestone"), "completed_at": created_at, "completed_by": person_name})
 
         # Build activity summary
         activity_summary = {
@@ -757,20 +652,14 @@ async def get_task_history(
             "total_changes": len([a for a in activities if a.get("attributes", {}).get("item_type") == "Task"]),
             "total_status_changes": len(status_history),
             "total_assignments": len(assignment_history),
-            "total_milestones": len(milestones)
+            "total_milestones": len(milestones),
         }
 
         # Build final history response
-        history_response = {
-            "task_id": task_id,
-            "status_history": status_history,
-            "assignment_history": assignment_history,
-            "milestones": milestones,
-            "activity_summary": activity_summary
-        }
+        history_response = {"task_id": task_id, "status_history": status_history, "assignment_history": assignment_history, "milestones": milestones, "activity_summary": activity_summary}
 
         await ctx.info(f"Successfully retrieved history for task {task_id}")
-        return _build_tool_result(history_response)
+        return history_response
 
     except ProductiveAPIError as e:
         await _handle_productive_api_error(ctx, e, f"task history for {task_id}")
@@ -781,44 +670,33 @@ async def get_task_history(
 
 def _summarize_activities(activities: list) -> dict:
     """Create a summary of activities by type and event."""
-    summary = {
-        "by_type": {},
-        "by_event": {},
-        "by_item_type": {},
-        "total": len(activities)
-    }
-    
+    summary = {"by_type": {}, "by_event": {}, "by_item_type": {}, "total": len(activities)}
+
     for activity in activities:
         if not isinstance(activity, dict):
             continue
-            
+
         attributes = activity.get("attributes", {})
         activity_type = attributes.get("type")
         event_type = attributes.get("event")
         item_type = attributes.get("item_type")
-        
+
         # Count by activity type
         if activity_type:
             summary["by_type"][activity_type] = summary["by_type"].get(activity_type, 0) + 1
-            
+
         # Count by event type
         if event_type:
             summary["by_event"][event_type] = summary["by_event"].get(event_type, 0) + 1
-            
+
         # Count by item type
         if item_type:
             summary["by_item_type"][item_type] = summary["by_item_type"].get(item_type, 0) + 1
-    
+
     return summary
 
 
-async def get_pages(
-    ctx: Context,
-    project_id: int = None,
-    creator_id: int = None,
-    page_number: int = None,
-    page_size: int = config.items_per_page
-) -> ToolResult:
+async def get_pages(ctx: Context, project_id: int = None, creator_id: int = None, page_number: int = None, page_size: int = config.items_per_page) -> ToolResult:
     """List pages (docs) with optional filters and pagination.
 
     Developer notes:
@@ -841,12 +719,12 @@ async def get_pages(
         params["sort"] = "-updated_at"
         result = await client.get_pages(params=params if params else None)
         await ctx.info("Successfully retrieved pages")
-        
+
         # For lists, remove heavy fields like body explicitly
         filtered = filter_page_list_response(result)
-        
-        return _build_tool_result(filtered)
-        
+
+        return filtered
+
     except ProductiveAPIError as e:
         await _handle_productive_api_error(ctx, e, "pages")
     except Exception as e:
@@ -865,11 +743,11 @@ async def get_page(ctx: Context, page_id: int) -> ToolResult:
         await ctx.info(f"Fetching page with ID: {page_id}")
         result = await client.get_page(page_id)
         await ctx.info("Successfully retrieved page")
-        
+
         filtered = filter_response(result)
-        
-        return _build_tool_result(filtered)
-        
+
+        return filtered
+
     except ProductiveAPIError as e:
         await _handle_productive_api_error(ctx, e, f"page {page_id}")
     except Exception as e:
@@ -877,12 +755,7 @@ async def get_page(ctx: Context, page_id: int) -> ToolResult:
         raise e
 
 
-async def get_attachments(
-    ctx: Context,
-    page_number: int = None,
-    page_size: int = config.items_per_page,
-    extra_filters: dict = None
-) -> ToolResult:
+async def get_attachments(ctx: Context, page_number: int = None, page_size: int = config.items_per_page, extra_filters: dict = None) -> ToolResult:
     """List attachments with optional filters and pagination (metadata only).
 
     Developer notes:
@@ -900,11 +773,11 @@ async def get_attachments(
 
         result = await client.get_attachments(params=params if params else None)
         await ctx.info("Successfully retrieved attachments")
-        
+
         filtered = filter_response(result)
-        
-        return _build_tool_result(filtered)
-        
+
+        return filtered
+
     except ProductiveAPIError as e:
         await _handle_productive_api_error(ctx, e, "attachments")
     except Exception as e:
@@ -921,7 +794,7 @@ async def get_attachment(ctx: Context, attachment_id: int) -> ToolResult:
 
         filtered = filter_response(result)
 
-        return _build_tool_result(filtered)
+        return filtered
 
     except ProductiveAPIError as e:
         await _handle_productive_api_error(ctx, e, f"attachment {attachment_id}")
@@ -951,7 +824,7 @@ async def get_people(ctx: Context, page_number: int = None, page_size: int = con
 
         filtered = filter_response(result)
 
-        return _build_tool_result(filtered)
+        return filtered
 
     except ProductiveAPIError as e:
         await _handle_productive_api_error(ctx, e, "people")
@@ -975,7 +848,7 @@ async def get_person(ctx: Context, person_id: int) -> ToolResult:
 
         filtered = filter_response(result)
 
-        return _build_tool_result(filtered)
+        return filtered
 
     except ProductiveAPIError as e:
         await _handle_productive_api_error(ctx, e, f"person {person_id}")
@@ -984,14 +857,7 @@ async def get_person(ctx: Context, person_id: int) -> ToolResult:
         raise e
 
 
-async def quick_search(
-    ctx: Context,
-    query: str,
-    search_types: list[str] = None,
-    deep_search: bool = True,
-    page: int = 1,
-    per_page: int = 50
-) -> ToolResult:
+async def quick_search(ctx: Context, query: str, search_types: list[str] = None, deep_search: bool = True, page: int = 1, per_page: int = 50) -> ToolResult:
     """Quick search across projects, tasks, pages, and actions.
 
     This tool provides fast, comprehensive search across all Productive content types
@@ -1020,13 +886,7 @@ async def quick_search(
         await ctx.info(f"Quick search with query: '{query}'")
 
         # Call the quick search method
-        result = await client.quick_search(
-            query=query,
-            search_types=search_types,
-            deep_search=deep_search,
-            page=page,
-            per_page=per_page
-        )
+        result = await client.quick_search(query=query, search_types=search_types, deep_search=deep_search, page=page, per_page=per_page)
 
         await ctx.info(f"Successfully retrieved {len(result.get('data', []))} search results")
 
@@ -1036,10 +896,10 @@ async def quick_search(
             attributes = item.get("attributes", {})
             record_type = attributes.get("record_type", "")
             record_id = attributes.get("record_id", "")
-            
+
             # Construct webapp URL (use raw record_type/record_id path; task hydration adds exact URL later)
             webapp_url = f"https://app.productive.io/27956-lineout/{record_type}s/{record_id}"
-            
+
             filtered_item = {
                 "record_id": record_id,
                 "record_type": record_type,
@@ -1049,9 +909,9 @@ async def quick_search(
                 "status": attributes.get("status", ""),
                 "project_name": attributes.get("meta", {}).get("project_name", ""),
                 "updated_at": attributes.get("updated_at", ""),
-                "webapp_url": webapp_url
+                "webapp_url": webapp_url,
             }
-            
+
             # For tasks, hydrate with full task details to expose workflow_status_name (custom status)
             if record_type == "task" and record_id:
                 try:
@@ -1069,37 +929,14 @@ async def quick_search(
                         filtered_item["webapp_url"] = task_data["webapp_url"]
                 except Exception as task_error:
                     await ctx.warning(f"Could not fetch workflow status for task {record_id}: {str(task_error)}")
-            
+
             filtered_data.append(filtered_item)
 
-        return _build_tool_result({
-            "data": filtered_data,
-            "meta": {
-                "query": query,
-                "search_types": search_types,
-                "deep_search": deep_search,
-                "page": page,
-                "per_page": per_page,
-                "total_results": len(filtered_data)
-            }
-        })
+        return {"data": filtered_data, "meta": {"query": query, "search_types": search_types, "deep_search": deep_search, "page": page, "per_page": per_page, "total_results": len(filtered_data)}}
 
     except ProductiveAPIError as e:
         await ctx.error(f"Quick search failed: {e.message}")
-        return _build_tool_result({
-            "data": [],
-            "meta": {
-                "error": str(e),
-                "status_code": e.status_code,
-                "query": query
-            }
-        })
+        return {"data": [], "meta": {"error": str(e), "status_code": e.status_code, "query": query}}
     except Exception as e:
         await ctx.error(f"Unexpected error during quick search: {str(e)}")
-        return _build_tool_result({
-            "data": [],
-            "meta": {
-                "error": str(e),
-                "query": query
-            }
-        })
+        return {"data": [], "meta": {"error": str(e), "query": query}}

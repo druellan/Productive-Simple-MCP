@@ -7,19 +7,22 @@ Author: druellan (druellan@ecimtech.com)
 License: MIT
 """
 
+import json
+
 from fastmcp import FastMCP, Context
+from fastmcp.server.middleware import Middleware, MiddlewareContext
 from typing import Any, Dict, Annotated
 from pydantic import Field
 from config import config
 from productive_client import client
 import tools
 from contextlib import asynccontextmanager
+from toon import encode as toon_encode
 
 
 @asynccontextmanager
 async def lifespan(server):
     """Server lifespan context manager"""
-    # Startup
     try:
         config.validate()
     except ValueError as e:
@@ -27,8 +30,36 @@ async def lifespan(server):
 
     yield
 
-    # Shutdown
     await client.close()
+
+
+class OutputSerializationMiddleware(Middleware):
+    """Serialize tool output based on OUTPUT_FORMAT configuration.
+
+    Intercepts tool results and serializes them to TOON or JSON format.
+    """
+
+    async def on_call_tool(self, context: MiddlewareContext, call_next):
+        result = await call_next(context)
+
+        if result and hasattr(result, "content"):
+            for item in result.content:
+                if hasattr(item, "text"):
+                    text = item.text
+                    if text and isinstance(text, str):
+                        try:
+                            parsed = json.loads(text)
+                            if config.output_format == "toon":
+                                try:
+                                    item.text = toon_encode(parsed)
+                                except Exception:
+                                    pass
+                            # else:
+                            #     item.text = json.dumps(parsed, indent=2, ensure_ascii=False)
+                        except (json.JSONDecodeError, TypeError, ValueError):
+                            pass
+
+        return result
 
 
 mcp = FastMCP(
@@ -44,6 +75,8 @@ mcp = FastMCP(
     lifespan=lifespan,
     on_duplicate="warn",
 )
+
+mcp.add_middleware(OutputSerializationMiddleware())
 
 
 @mcp.tool
