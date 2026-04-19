@@ -34,7 +34,7 @@ async def lifespan(server):
 mcp = FastMCP(
     name="Productive MCP Server",
     instructions=(
-        "Access Productive.io data: projects, folders, tasks, pages, comments, todos, people."
+        "Access Productive.io data: projects, folders, tasks, pages, comments, todos, people, workflow statuses, and time entries."
         "Use quick_search for general queries, get_recent_activity for team updates, get_task for specific tasks."
         "Use get_task_history for comprehensive task history including status changes, assignments, and milestones."
         "Use get_people to list team members and get_person for individual details."
@@ -212,6 +212,63 @@ async def get_folder(
     Productive exposes folders through the `/folders` endpoint.
     """
     return await tools.get_folder(ctx, folder_id)
+
+
+@mcp.tool
+async def list_workflow_statuses(
+    ctx: Context,
+    workflow_id: Annotated[
+        int, Field(description="Optional workflow ID to filter statuses")
+    ] = None,
+    category_id: Annotated[
+        int,
+        Field(description="Optional category filter: 1 = Not Started, 2 = Started, 3 = Closed"),
+    ] = None,
+    limit: Annotated[
+        int, Field(description="Maximum number of workflow statuses to return (max 200)")
+    ] = config.items_per_page,
+) -> Dict[str, Any]:
+    """List workflow statuses from Productive.
+
+    Useful for understanding valid task status values by workflow.
+    """
+    return await tools.list_workflow_statuses(
+        ctx,
+        workflow_id=workflow_id,
+        category_id=category_id,
+        limit=limit,
+    )
+
+
+@mcp.tool
+async def list_time_entries(
+    ctx: Context,
+    date: Annotated[str, Field(description="Optional date filter (YYYY-MM-DD)")] = None,
+    after: Annotated[str, Field(description="Optional lower bound date filter (YYYY-MM-DD)")] = None,
+    before: Annotated[str, Field(description="Optional upper bound date filter (YYYY-MM-DD)")] = None,
+    person_id: Annotated[int, Field(description="Optional person ID filter")] = None,
+    project_id: Annotated[int, Field(description="Optional project ID filter")] = None,
+    task_id: Annotated[int, Field(description="Optional task ID filter")] = None,
+    service_id: Annotated[int, Field(description="Optional service ID filter")] = None,
+    page_number: Annotated[int, Field(description="Page number for pagination")] = None,
+    limit: Annotated[int, Field(description="Maximum number of time entries to return (max 200)")] = config.items_per_page,
+) -> Dict[str, Any]:
+    """List time entries with optional date and relationship filters.
+
+    Returns logged work records and related references (person/service/task).
+    """
+    return await tools.list_time_entries(
+        ctx,
+        date=date,
+        after=after,
+        before=before,
+        person_id=person_id,
+        project_id=project_id,
+        task_id=task_id,
+        service_id=service_id,
+        page_number=page_number,
+        limit=limit,
+    )
 
 
 @mcp.tool

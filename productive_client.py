@@ -166,6 +166,14 @@ class ProductiveClient:
         """Get folder by ID."""
         return await self._request("GET", f"/folders/{str(folder_id)}")
 
+    async def get_workflow_statuses(self, params: Optional[dict] = None) -> Dict[str, Any]:
+        """Get workflow statuses with optional filters."""
+        return await self._request("GET", "/workflow_statuses", params=params)
+
+    async def get_time_entries(self, params: Optional[dict] = None) -> Dict[str, Any]:
+        """Get time entries with optional filters."""
+        return await self._request("GET", "/time_entries", params=params)
+
     async def quick_search(
         self,
         query: str,

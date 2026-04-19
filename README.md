@@ -112,6 +112,28 @@ Productive's API exposes this resource through the `/folders` endpoint.
 **Properties:**
 - `folder_id` (int): The unique Productive folder identifier
 
+### `list_workflow_statuses`
+Retrieve workflow statuses with optional filters.
+
+**Properties:**
+- `workflow_id` (int, optional): Filter statuses by workflow ID
+- `category_id` (int, optional): Filter by category (`1` Not Started, `2` Started, `3` Closed)
+- `limit` (int, optional): Maximum number of statuses to return (default: 50, max: 200)
+
+### `list_time_entries`
+Retrieve time entries with optional date and relationship filters.
+
+**Properties:**
+- `date` (str, optional): Exact date filter (`YYYY-MM-DD`)
+- `after` (str, optional): Lower bound date filter (`YYYY-MM-DD`)
+- `before` (str, optional): Upper bound date filter (`YYYY-MM-DD`)
+- `person_id` (int, optional): Filter by person ID
+- `project_id` (int, optional): Filter by project ID
+- `task_id` (int, optional): Filter by task ID
+- `service_id` (int, optional): Filter by service ID
+- `page_number` (int, optional): Page number for pagination
+- `limit` (int, optional): Maximum number of entries to return (default: 50, max: 200)
+
 ### `get_tasks`
 Retrieve tasks with optional filtering and pagination.
 

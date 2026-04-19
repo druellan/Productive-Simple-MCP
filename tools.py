@@ -134,6 +134,121 @@ async def get_folder(ctx: Context, folder_id: int) -> ToolResult:
         raise e
 
 
+async def list_workflow_statuses(
+    ctx: Context,
+    workflow_id: int = None,
+    category_id: int = None,
+    limit: int = config.items_per_page,
+) -> ToolResult:
+    """List workflow statuses with optional workflow/category filters.
+
+    Developer notes:
+    - Uses Productive `/workflow_statuses` endpoint.
+    - category_id follows Productive categories: 1=Not Started, 2=Started, 3=Closed.
+    - limit maps to page[size] and is capped at 200.
+    """
+    try:
+        if limit > 200:
+            await ctx.warning("limit exceeds API max of 200, using 200")
+            limit = 200
+
+        if category_id is not None and category_id not in (1, 2, 3):
+            raise ProductiveAPIError(
+                "category_id must be one of: 1 (Not Started), 2 (Started), 3 (Closed)",
+                400,
+                "INVALID_PARAMS",
+            )
+
+        await ctx.info("Fetching workflow statuses")
+        params = {"page[size]": limit}
+
+        if workflow_id is not None:
+            params["filter[workflow_id]"] = workflow_id
+
+        if category_id is not None:
+            params["filter[category_id]"] = category_id
+
+        result = await client.get_workflow_statuses(params=params)
+        await ctx.info("Successfully retrieved workflow statuses")
+
+        filtered = filter_response(result)
+        return _build_tool_result(filtered)
+
+    except ProductiveAPIError as e:
+        await _handle_productive_api_error(ctx, e, "workflow statuses")
+    except Exception as e:
+        await ctx.error(f"Unexpected error fetching workflow statuses: {str(e)}")
+        raise e
+
+
+async def list_time_entries(
+    ctx: Context,
+    date: str = None,
+    after: str = None,
+    before: str = None,
+    person_id: int = None,
+    project_id: int = None,
+    task_id: int = None,
+    service_id: int = None,
+    page_number: int = None,
+    limit: int = config.items_per_page,
+) -> ToolResult:
+    """List time entries with optional date and relationship filters.
+
+    Developer notes:
+    - Uses Productive `/time_entries` endpoint.
+    - Supports exact date (filter[date]) and date range (filter[after]/filter[before]).
+    - Includes person, service, task by default for better context.
+    - limit maps to page[size] and is capped at 200.
+    """
+    try:
+        if limit > 200:
+            await ctx.warning("limit exceeds API max of 200, using 200")
+            limit = 200
+
+        await ctx.info("Fetching time entries")
+        params = {
+            "include": "person,service,task",
+            "page[size]": limit,
+        }
+
+        if page_number is not None:
+            params["page[number]"] = page_number
+
+        if date is not None:
+            params["filter[date]"] = date
+
+        if after is not None:
+            params["filter[after]"] = after
+
+        if before is not None:
+            params["filter[before]"] = before
+
+        if person_id is not None:
+            params["filter[person_id]"] = person_id
+
+        if project_id is not None:
+            params["filter[project_id]"] = project_id
+
+        if task_id is not None:
+            params["filter[task_id]"] = task_id
+
+        if service_id is not None:
+            params["filter[service_id]"] = service_id
+
+        result = await client.get_time_entries(params=params)
+        await ctx.info("Successfully retrieved time entries")
+
+        filtered = filter_response(result)
+        return _build_tool_result(filtered)
+
+    except ProductiveAPIError as e:
+        await _handle_productive_api_error(ctx, e, "time entries")
+    except Exception as e:
+        await ctx.error(f"Unexpected error fetching time entries: {str(e)}")
+        raise e
+
+
 async def get_tasks(
     ctx: Context,
     page_number: int = None,
