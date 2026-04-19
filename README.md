@@ -4,7 +4,7 @@
 
 A Model Context Protocol (MCP) server for integrating Productive.io into AI workflows. This server allows AI assistants and tools to access projects, folders, tasks, pages and teams. Built with [FastMCP](https://gofastmcp.com/).
 
-This implementation is tailored for read-only operations, providing streamlined access to essential data while minimizing token consumption using TOON as output. It is optimized for efficiency and simplicity, exposing only the necessary information. For a more comprehensive solution, consider BerwickGeek's implementation: [Productive MCP by BerwickGeek](https://github.com/berwickgeek/productive-mcp).
+This implementation is tailored for read-only operations, providing streamlined access to essential data with LLM-friendly output options (JSON and TOON). It is optimized for efficiency and simplicity, exposing only the necessary information. For a more comprehensive solution, consider BerwickGeek's implementation: [Productive MCP by BerwickGeek](https://github.com/berwickgeek/productive-mcp).
 
 <a href="https://glama.ai/mcp/servers/@druellan/Productive-GET-MCP">
   <img width="380" height="200" src="https://glama.ai/mcp/servers/@druellan/Productive-GET-MCP/badge" alt="Productive Simple MCP server" />
@@ -53,11 +53,44 @@ The server uses environment variables for configuration:
 - `PRODUCTIVE_ORGANIZATION`: Your Productive organization ID (required)
 - `PRODUCTIVE_BASE_URL`: Base URL for Productive API (default: https://api.productive.io/api/v2)
 - `PRODUCTIVE_TIMEOUT`: Request timeout in seconds (default: 30)
-- `OUTPUT_FORMAT`: Output format for tool responses ("toon" or "json", default: "toon")
+- `OUTPUT_FORMAT`: Output format for tool responses ("toon" or "json", default: "json")
 
 ## Usage
 
-### Direct Python Execution (Recommended)
+### Using `uvx` from GitHub (Recommended for MCP clients)
+```json
+    "productive": {
+      "command": "uvx",
+      "args": [
+        "--from",
+        "git+https://github.com/druellan/Productive-Simple-MCP",
+        "productive-mcp"
+      ],
+      "env": {
+        "PRODUCTIVE_API_KEY": "<api-key>",
+        "PRODUCTIVE_ORGANIZATION": "<organization-id>"
+      }
+    }
+```
+
+### Using `uvx` from GitHub with TOON output enabled
+```json
+    "productive": {
+      "command": "uvx",
+      "args": [
+        "--from",
+        "git+https://github.com/druellan/Productive-Simple-MCP",
+        "productive-mcp"
+      ],
+      "env": {
+        "PRODUCTIVE_API_KEY": "<api-key>",
+        "PRODUCTIVE_ORGANIZATION": "<organization-id>",
+        "OUTPUT_FORMAT": "toon"
+      }
+    }
+```
+
+### Local Development (Direct Python Execution)
 ```json
     "productive": {
       "command": "python",
@@ -71,7 +104,7 @@ The server uses environment variables for configuration:
     }
 ```
 
-### Using UV
+### Local Development Using UV
 ```json
     "productive": {
       "command": "uv",
@@ -81,9 +114,9 @@ The server uses environment variables for configuration:
       ],
       "env": {
         "PRODUCTIVE_API_KEY": "<api-key>",
-        "PRODUCTIVE_ORGANIZATION": "<organization-id"
+        "PRODUCTIVE_ORGANIZATION": "<organization-id>"
       }
-    },
+    }
 ```
 
 ## Available Tools
@@ -271,8 +304,8 @@ Retrieve a specific todo checklist item by ID.
 
 All tools return filtered data optimized for LLM processing. The output format can be configured via the `OUTPUT_FORMAT` environment variable:
 
-- **JSON**: Standard JSON format for compatibility with existing tools and workflows
-- **TOON** (default): Token-Optimized Object Notation reduces token consumption by 30-60% compared to JSON, ideal for LLM interactions
+- **JSON** (default): Standard JSON format for compatibility with existing tools and workflows
+- **TOON**: Token-Optimized Object Notation reduces token consumption by 30-60% compared to JSON, ideal for LLM interactions
 
 All tools return filtered data optimized for LLM processing:
 
