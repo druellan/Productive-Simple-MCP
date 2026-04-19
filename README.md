@@ -3,7 +3,7 @@
 ![](https://badge.mcpx.dev?type=server&features=tools 'MCP server with features')
 [![Productive-GET-MCP MCP server](https://glama.ai/mcp/servers/druellan/Productive-GET-MCP/badges/score.svg)](https://glama.ai/mcp/servers/druellan/Productive-GET-MCP)
 
-A Model Context Protocol (MCP) server for integrating Productive.io into AI workflows. This server allows AI assistants and tools to access projects, folders, tasks, pages and teams. Built with [FastMCP](https://gofastmcp.com/).
+A Model Context Protocol (MCP) server for integrating Productive.io into AI workflows. This server allows AI assistants and tools to access projects, folders, workflow statuses, time entries, tasks, comments, pages, attachments, todos, and people. Built with [FastMCP](https://gofastmcp.com/).
 
 This implementation is tailored for read-only operations, providing streamlined access to essential data with LLM-friendly output options (JSON and TOON). It is optimized for efficiency and simplicity, exposing only the necessary information. For a more comprehensive solution, consider BerwickGeek's implementation: [Productive MCP by BerwickGeek](https://github.com/berwickgeek/productive-mcp).
 
@@ -12,23 +12,28 @@ This implementation is tailored for read-only operations, providing streamlined 
 - **Get Projects**: Retrieve all projects with basic information
 - **List Folders**: Retrieve folders within a project
 - **Get Folder**: Retrieve a specific folder by ID
+- **List Workflow Statuses**: Retrieve workflow statuses with optional filters
+- **List Time Entries**: Retrieve time entries with optional date and relationship filters
 - **Get Tasks**: Retrieve tasks with filtering and pagination
 - **Get Task**: Retrieve a specific task by internal ID
+- **Get Task History**: Retrieve task status changes, assignments, milestones, and activity summaries
 - **Get Comments**: Retrieve comments with filtering
 - **Get Pages**: Retrieve pages/documents with filtering
 - **Get Page**: Retrieve a specific page/document by ID
 - **Get Attachments**: Retrieve attachments/files with filtering
 - **Get Todos**: Retrieve todo checklist items with filtering
 - **Get Todo**: Retrieve a specific todo by ID
+- **Get People**: Retrieve people/team members with pagination
+- **Get Person**: Retrieve a specific person by ID
 - **Get Recent Updates**: Summarized activity feed for status updates
 - **Quick Search**: Fast, comprehensive search across projects, tasks, pages, and actions
 - **LLM-Optimized Responses**: Filtered output removes noise, strips HTML, and reduces token consumption
 
 ## Requirements
 
-- Python 3.8+
+- Python 3.10+
 - Productive API token
-- FastMCP 2.0+
+- FastMCP 3.x
 
 ## Installation
 
@@ -163,6 +168,19 @@ Retrieve time entries with optional date and relationship filters.
 - `service_id` (int, optional): Filter by service ID
 - `page_number` (int, optional): Page number for pagination
 - `limit` (int, optional): Maximum number of entries to return (default: 50, max: 200)
+
+### `get_people`
+Retrieve people/team members with optional pagination.
+
+**Properties:**
+- `page_number` (int, optional): Page number for pagination
+- `page_size` (int, optional): Number of people to return per page (max: 200)
+
+### `get_person`
+Retrieve a specific person by ID.
+
+**Properties:**
+- `person_id` (int): The unique Productive person identifier
 
 ### `get_tasks`
 Retrieve tasks with optional filtering and pagination.

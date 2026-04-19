@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "productive-mcp"
-version = "0.3.0"
-description = "Simple MCP server to access the Productive API (activity,projects, pages, tasks, comments, todo-lists)."
+version = "0.3.1"
+description = "Simple MCP server to access the Productive API (activity, projects, folders, workflow statuses, time entries, tasks, comments, pages, attachments, todos, and people)."
 readme = {file = "README.md", content-type = "text/markdown"}
 requires-python = ">=3.10"
 license = "MIT"
@@ -13,7 +13,7 @@ license-files = ["LICENSE"]
 authors = [
     {name = "druellan", email = "dario.ruellan@gmail.com"}
 ]
-keywords = ["productive", "mcp", "tasks", "comments", "todos"]
+keywords = ["productive", "mcp", "tasks", "comments", "todos", "time-entries", "workflow-statuses"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Environment :: Console",

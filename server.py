@@ -1,6 +1,5 @@
 """
-Simple MCP server to access the Productive API (projects, tasks, comments, todo-lists).
-Version: 0.3.0
+Simple MCP server to access the Productive API.
 
 This software is provided "as is" without warranty of any kind. Use at your own risk.
 Author: druellan (druellan@ecimtech.com)
@@ -54,8 +53,6 @@ class OutputSerializationMiddleware(Middleware):
                                     item.text = toon_encode(parsed)
                                 except Exception:
                                     pass
-                            # else:
-                            #     item.text = json.dumps(parsed, indent=2, ensure_ascii=False)
                         except (json.JSONDecodeError, TypeError, ValueError):
                             pass
 
@@ -71,7 +68,7 @@ mcp = FastMCP(
         "Use get_people to list team members and get_person for individual details."
         "All endpoints paginate (max 200 items). Use filters when possible to reduce scope."
     ),
-    version="0.3.0",
+    version="0.3.1",
     lifespan=lifespan,
     on_duplicate="warn",
 )
