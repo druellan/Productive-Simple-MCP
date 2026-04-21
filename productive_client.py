@@ -50,18 +50,27 @@ class ProductiveClient:
         return attempt < self.max_retries and (status_code == 429 or status_code >= 500)
 
     async def _request(
-        self, method: str, endpoint: str, params: Optional[dict] = None
+        self,
+        method: str,
+        endpoint: str,
+        params: Optional[dict] = None,
+        data: Optional[dict] = None,
     ) -> Dict[str, Any]:
         """Make HTTP request to Productive API with retry logic for transient failures"""
         url = f"{config.base_url}{endpoint}"
 
         for attempt in range(self.max_retries + 1):
             try:
-                response = await self.client.request(method, url, params=params)
+                response = await self.client.request(method, url, params=params, json=data)
 
                 # Success
-                if response.status_code == 200:
-                    return response.json()
+                if 200 <= response.status_code < 300:
+                    if response.status_code == 204:
+                        return {}
+                    try:
+                        return response.json()
+                    except Exception:
+                        return {}
 
                 # Non-retryable errors
                 if response.status_code == 401:
@@ -105,6 +114,10 @@ class ProductiveClient:
             params = {}
         params["include"] = "workflow_status"
         return await self._request("GET", "/tasks", params=params)
+
+    async def create_task(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        """Create a task with Productive JSON:API payload."""
+        return await self._request("POST", "/tasks", data=data)
 
     async def get_task(self, task_id: int) -> Dict[str, Any]:
         """Get task by ID with workflow_status always included"""

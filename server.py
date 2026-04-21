@@ -372,6 +372,42 @@ async def get_task(
 
 
 @mcp.tool
+async def create_task(
+    ctx: Context,
+    title: Annotated[str, Field(description="Task title")],
+    project_id: Annotated[int, Field(description="Productive project ID where the task will be created")],
+    description: Annotated[str, Field(description="Optional task description")] = None,
+    board_id: Annotated[int, Field(description="Optional board ID")] = None,
+    task_list_id: Annotated[int, Field(description="Optional task list ID")] = None,
+    assignee_id: Annotated[int, Field(description="Optional assignee (person) ID")] = None,
+    due_date: Annotated[str, Field(description="Optional due date (YYYY-MM-DD)")] = None,
+    status: Annotated[str, Field(description="Task status: 'open' or 'closed'")] = "open",
+) -> Dict[str, Any]:
+    """Create a new task in a Productive project.
+
+    Accepts title and project ID (required), plus optional description, board/task list
+    assignment, assignee, and due date. Returns the created task object with full details.
+
+    Write Protection: Globally blocked when READ_ONLY=true. Set READ_ONLY=false to enable.
+
+    Examples:
+        create_task(title="Fix login bug", project_id=12345)
+        create_task(title="Review PR", project_id=123, assignee_id=999, due_date="2026-04-25")
+    """
+    return await tools.create_task(
+        ctx=ctx,
+        title=title,
+        project_id=project_id,
+        description=description,
+        board_id=board_id,
+        task_list_id=task_list_id,
+        assignee_id=assignee_id,
+        due_date=due_date,
+        status=status,
+    )
+
+
+@mcp.tool
 async def get_task_history(
     ctx: Context,
     task_id: Annotated[

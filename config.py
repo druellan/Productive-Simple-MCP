@@ -12,6 +12,22 @@ class Config:
         self.organization = int(os.getenv("PRODUCTIVE_ORGANIZATION", ""))
         self.items_per_page = int(os.getenv("PRODUCTIVE_ITEMS_PER_PAGE", "50"))
         self.output_format = os.getenv("OUTPUT_FORMAT", "json")
+        self.read_only = self._parse_bool_env("READ_ONLY", default=True)
+
+    @staticmethod
+    def _parse_bool_env(env_name: str, default: bool) -> bool:
+        """Parse boolean environment variables using explicit true/false values."""
+        raw_value = os.getenv(env_name)
+        if raw_value is None:
+            return default
+
+        normalized = raw_value.strip().lower()
+        if normalized == "true":
+            return True
+        if normalized == "false":
+            return False
+
+        raise ValueError(f"{env_name} must be either 'true' or 'false'")
 
     def validate(self) -> bool:
         """Validate configuration
@@ -43,6 +59,9 @@ class Config:
 
         if self.output_format not in ["toon", "json"]:
             errors.append("OUTPUT_FORMAT must be either 'toon' or 'json'")
+
+        if not isinstance(self.read_only, bool):
+            errors.append("READ_ONLY must be either 'true' or 'false'")
 
         if errors:
             raise ValueError("Configuration validation failed: " + "; ".join(errors))

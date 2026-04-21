@@ -46,4 +46,4 @@ Repository = "https://github.com/druellan/productive-mcp"
 Documentation = "https://github.com/druellan/productive-mcp#readme"
 
 [tool.setuptools]
-py-modules = ["server", "config", "productive_client", "tools", "utils"]
+py-modules = ["server", "config", "productive_client", "tools", "tools_read", "tools_write", "utils"]

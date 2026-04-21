@@ -5,7 +5,7 @@
 
 A Model Context Protocol (MCP) server for integrating Productive.io into AI workflows. This server allows AI assistants and tools to access projects, folders, workflow statuses, time entries, tasks, comments, pages, attachments, todos, and people. Built with [FastMCP](https://gofastmcp.com/).
 
-This implementation is tailored for read-only operations, providing streamlined access to essential data with LLM-friendly output options (JSON and TOON). It is optimized for efficiency and simplicity, exposing only the necessary information. For a more comprehensive solution, consider BerwickGeek's implementation: [Productive MCP by BerwickGeek](https://github.com/berwickgeek/productive-mcp).
+This implementation is optimized for read-focused operations, with optional guarded write capabilities (for example, task creation) and LLM-friendly output options (JSON and TOON). It is optimized for efficiency and simplicity, exposing only the necessary information. For a more comprehensive solution, consider BerwickGeek's implementation: [Productive MCP by BerwickGeek](https://github.com/berwickgeek/productive-mcp).
 
 ## Features
 
@@ -16,6 +16,7 @@ This implementation is tailored for read-only operations, providing streamlined 
 - **List Time Entries**: Retrieve time entries with optional date and relationship filters
 - **Get Tasks**: Retrieve tasks with filtering and pagination
 - **Get Task**: Retrieve a specific task by internal ID
+- **Create Task**: Create a new task in a project (blocked when READ_ONLY=true)
 - **Get Task History**: Retrieve task status changes, assignments, milestones, and activity summaries
 - **Get Comments**: Retrieve comments with filtering
 - **Get Pages**: Retrieve pages/documents with filtering
@@ -56,6 +57,7 @@ The server uses environment variables for configuration:
 - `PRODUCTIVE_BASE_URL`: Base URL for Productive API (default: https://api.productive.io/api/v2)
 - `PRODUCTIVE_TIMEOUT`: Request timeout in seconds (default: 30)
 - `OUTPUT_FORMAT`: Output format for tool responses ("toon" or "json", default: "json")
+- `READ_ONLY`: Global write-protection toggle for create/write tools ("true" or "false", default: "true")
 
 ## Usage
 
@@ -198,6 +200,21 @@ Retrieve a specific task by its internal ID. Returns task details including titl
 
 **Properties:**
 - `task_id` (int): The unique Productive task identifier (internal ID, e.g., 14677418)
+
+### `create_task`
+Create a new task in Productive.
+
+When `READ_ONLY=true`, this tool is blocked globally and returns a write-protection error.
+
+**Properties:**
+- `title` (str, required): Task title
+- `project_id` (int, required): Productive project ID where the task will be created
+- `description` (str, optional): Task description
+- `board_id` (int, optional): Board ID
+- `task_list_id` (int, optional): Task list ID
+- `assignee_id` (int, optional): Assignee/person ID
+- `due_date` (str, optional): Due date (`YYYY-MM-DD`)
+- `status` (str, optional): `open` or `closed` (default: `open`)
 
 ---
 
