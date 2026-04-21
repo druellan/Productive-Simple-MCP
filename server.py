@@ -408,6 +408,69 @@ async def create_task(
 
 
 @mcp.tool
+async def update_task(
+    ctx: Context,
+    task_id: Annotated[int, Field(description="Productive task ID to update")],
+    title: Annotated[str, Field(description="New task title")] = None,
+    description: Annotated[str, Field(description="New task description")] = None,
+    assignee_id: Annotated[
+        int,
+        Field(
+            description="New assignee person ID. Use 0 or negative to unassign the task."
+        ),
+    ] = None,
+    due_date: Annotated[str, Field(description="New due date (YYYY-MM-DD)")] = None,
+    status: Annotated[str, Field(description="New status: 'open' or 'closed'")] = None,
+    board_id: Annotated[int, Field(description="Move task to this board")] = None,
+    task_list_id: Annotated[
+        int, Field(description="Move task to this task list")
+    ] = None,
+) -> Dict[str, Any]:
+    """Update an existing task in Productive.
+
+    Only provided fields are modified (partial PATCH). At least one field must be given.
+    Supports updating title, description, assignee, due date, status, board, and task list
+    in a single call. To unassign a task, pass assignee_id as 0 or a negative number.
+
+    Write Protection: Globally blocked when READ_ONLY=true. Set READ_ONLY=false to enable.
+
+    Examples:
+        update_task(task_id=14677921, title="Updated title")
+        update_task(task_id=14677921, status="closed", assignee_id=0)
+        update_task(task_id=14677921, due_date="2026-05-01", board_id=456)
+    """
+    return await tools.update_task(
+        ctx=ctx,
+        task_id=task_id,
+        title=title,
+        description=description,
+        assignee_id=assignee_id,
+        due_date=due_date,
+        status=status,
+        board_id=board_id,
+        task_list_id=task_list_id,
+    )
+
+
+@mcp.tool
+async def delete_task(
+    ctx: Context,
+    task_id: Annotated[int, Field(description="Productive task ID to delete")],
+) -> Dict[str, Any]:
+    """Permanently delete a task from Productive by its ID.
+
+    This action is irreversible — the task and all associated data (comments, todos,
+    time entries) will be removed. Use with caution.
+
+    Write Protection: Globally blocked when READ_ONLY=true. Set READ_ONLY=false to enable.
+
+    Examples:
+        delete_task(task_id=14677921)
+    """
+    return await tools.delete_task(ctx=ctx, task_id=task_id)
+
+
+@mcp.tool
 async def get_task_history(
     ctx: Context,
     task_id: Annotated[

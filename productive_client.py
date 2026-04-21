@@ -119,6 +119,14 @@ class ProductiveClient:
         """Create a task with Productive JSON:API payload."""
         return await self._request("POST", "/tasks", data=data)
 
+    async def update_task(self, task_id: int, data: Dict[str, Any]) -> Dict[str, Any]:
+        """Update a task with Productive JSON:API payload (PATCH)."""
+        return await self._request("PATCH", f"/tasks/{str(task_id)}", data=data)
+
+    async def delete_task(self, task_id: int) -> Dict[str, Any]:
+        """Delete a task by ID (returns 204 No Content)."""
+        return await self._request("DELETE", f"/tasks/{str(task_id)}")
+
     async def get_task(self, task_id: int) -> Dict[str, Any]:
         """Get task by ID with workflow_status always included"""
         return await self._request(

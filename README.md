@@ -17,6 +17,8 @@ This implementation is optimized for read-focused operations, with optional guar
 - **Get Tasks**: Retrieve tasks with filtering and pagination
 - **Get Task**: Retrieve a specific task by internal ID
 - **Create Task**: Create a new task in a project (blocked when READ_ONLY=true)
+- **Update Task**: Update task fields — title, description, assignee, due date, status, board, task list (blocked when READ_ONLY=true)
+- **Delete Task**: Permanently delete a task by ID (blocked when READ_ONLY=true)
 - **Get Task History**: Retrieve task status changes, assignments, milestones, and activity summaries
 - **Get Comments**: Retrieve comments with filtering
 - **Get Pages**: Retrieve pages/documents with filtering
@@ -57,7 +59,7 @@ The server uses environment variables for configuration:
 - `PRODUCTIVE_BASE_URL`: Base URL for Productive API (default: https://api.productive.io/api/v2)
 - `PRODUCTIVE_TIMEOUT`: Request timeout in seconds (default: 30)
 - `OUTPUT_FORMAT`: Output format for tool responses ("toon" or "json", default: "json")
-- `READ_ONLY`: Global write-protection toggle for create/write tools ("true" or "false", default: "true")
+- `READ_ONLY`: Global write-protection toggle for write tools — create_task, update_task, delete_task ("true" or "false", default: "true")
 
 ## Usage
 
@@ -215,6 +217,32 @@ When `READ_ONLY=true`, this tool is blocked globally and returns a write-protect
 - `assignee_id` (int, optional): Assignee/person ID
 - `due_date` (str, optional): Due date (`YYYY-MM-DD`)
 - `status` (str, optional): `open` or `closed` (default: `open`)
+
+### `update_task`
+
+Update an existing task in Productive. Only provided fields are modified (partial PATCH).
+At least one field must be given. When `READ_ONLY=true`, this tool is blocked globally.
+
+**Properties:**
+
+- `task_id` (int, required): Productive task ID to update
+- `title` (str, optional): New task title
+- `description` (str, optional): New task description
+- `assignee_id` (int, optional): New assignee person ID. Use 0 or negative to unassign.
+- `due_date` (str, optional): New due date (`YYYY-MM-DD`)
+- `status` (str, optional): New status — `open` or `closed`
+- `board_id` (int, optional): Move task to this board
+- `task_list_id` (int, optional): Move task to this task list
+
+### `delete_task`
+
+Permanently delete a task from Productive by its ID. This action is irreversible —
+the task and all associated data will be removed. When `READ_ONLY=true`, this tool is
+blocked globally.
+
+**Properties:**
+
+- `task_id` (int, required): Productive task ID to delete
 
 ---
 
