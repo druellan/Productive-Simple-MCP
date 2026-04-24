@@ -9,6 +9,7 @@ This implementation is optimized for read-focused operations, with optional guar
 
 ## Features
 
+### Read Tools
 - **Get Projects**: Retrieve all projects with basic information
 - **List Folders**: Retrieve folders within a project
 - **Get Folder**: Retrieve a specific folder by ID
@@ -16,9 +17,6 @@ This implementation is optimized for read-focused operations, with optional guar
 - **List Time Entries**: Retrieve time entries with optional date and relationship filters
 - **Get Tasks**: Retrieve tasks with filtering and pagination
 - **Get Task**: Retrieve a specific task by internal ID
-- **Create Task**: Create a new task in a project (blocked when READ_ONLY=true)
-- **Update Task**: Update task fields — title, description, assignee, due date, status, board, task list (blocked when READ_ONLY=true)
-- **Delete Task**: Permanently delete a task by ID (blocked when READ_ONLY=true)
 - **Get Task History**: Retrieve task status changes, assignments, milestones, and activity summaries
 - **Get Comments**: Retrieve comments with filtering
 - **Get Pages**: Retrieve pages/documents with filtering
@@ -30,6 +28,25 @@ This implementation is optimized for read-focused operations, with optional guar
 - **Get Person**: Retrieve a specific person by ID
 - **Get Recent Updates**: Summarized activity feed for status updates
 - **Quick Search**: Fast, comprehensive search across projects, tasks, pages, and actions
+
+### Write Tools (blocked when READ_ONLY=true)
+- **Create Task**: Create a new task in a project
+- **Update Task**: Update task fields — title, description, assignee, due date, status, board, task list
+- **Delete Task**: Permanently delete a task by ID (irreversible)
+- **Create Comment**: Create a new comment on a task or project
+- **Update Comment**: Update a comment body
+- **Delete Comment**: Permanently delete a comment by ID (irreversible)
+- **Create Time Entry**: Log time spent on tasks or services
+- **Update Time Entry**: Modify existing time entries
+- **Delete Time Entry**: Remove time entries (irreversible)
+- **Create Page**: Create new documents/pages in projects
+- **Update Page**: Edit page content and titles
+- **Delete Page**: Remove pages/documents (irreversible)
+- **Create Todo**: Add checklist items to tasks
+- **Update Todo**: Modify todo items and completion status
+- **Delete Todo**: Remove todo items (irreversible)
+
+### Additional Features
 - **LLM-Optimized Responses**: Filtered output removes noise, strips HTML, and reduces token consumption
 
 ## Requirements
@@ -59,7 +76,7 @@ The server uses environment variables for configuration:
 - `PRODUCTIVE_BASE_URL`: Base URL for Productive API (default: https://api.productive.io/api/v2)
 - `PRODUCTIVE_TIMEOUT`: Request timeout in seconds (default: 30)
 - `OUTPUT_FORMAT`: Output format for tool responses ("toon" or "json", default: "json")
-- `READ_ONLY`: Global write-protection toggle for write tools — create_task, update_task, delete_task ("true" or "false", default: "true")
+- `READ_ONLY`: Global write-protection toggle for write tools — create_task, update_task, delete_task, create_comment, update_comment, delete_comment, create_time_entry, update_time_entry, delete_time_entry, create_page, update_page, delete_page, create_todo, update_todo, delete_todo ("true" or "false", default: "true")
 
 ## Usage
 
@@ -126,6 +143,8 @@ The server uses environment variables for configuration:
 ```
 
 ## Available Tools
+
+### Read Tools
 
 ### `get_projects`
 Retrieve all projects with basic information.
@@ -203,49 +222,6 @@ Retrieve a specific task by its internal ID. Returns task details including titl
 **Properties:**
 - `task_id` (int): The unique Productive task identifier (internal ID, e.g., 14677418)
 
-### `create_task`
-Create a new task in Productive.
-
-When `READ_ONLY=true`, this tool is blocked globally and returns a write-protection error.
-
-**Properties:**
-- `title` (str, required): Task title
-- `project_id` (int, required): Productive project ID where the task will be created
-- `description` (str, optional): Task description
-- `board_id` (int, optional): Board ID
-- `task_list_id` (int, optional): Task list ID
-- `assignee_id` (int, optional): Assignee/person ID
-- `due_date` (str, optional): Due date (`YYYY-MM-DD`)
-- `status` (str, optional): `open` or `closed` (default: `open`)
-
-### `update_task`
-
-Update an existing task in Productive. Only provided fields are modified (partial PATCH).
-At least one field must be given. When `READ_ONLY=true`, this tool is blocked globally.
-
-**Properties:**
-
-- `task_id` (int, required): Productive task ID to update
-- `title` (str, optional): New task title
-- `description` (str, optional): New task description
-- `assignee_id` (int, optional): New assignee person ID. Use 0 or negative to unassign.
-- `due_date` (str, optional): New due date (`YYYY-MM-DD`)
-- `status` (str, optional): New status — `open` or `closed`
-- `board_id` (int, optional): Move task to this board
-- `task_list_id` (int, optional): Move task to this task list
-
-### `delete_task`
-
-Permanently delete a task from Productive by its ID. This action is irreversible —
-the task and all associated data will be removed. When `READ_ONLY=true`, this tool is
-blocked globally.
-
-**Properties:**
-
-- `task_id` (int, required): Productive task ID to delete
-
----
-
 ### `get_task_history`
 Retrieve the full history for a specific task, including status changes, assignment history, milestones, and activity summary.
 
@@ -265,7 +241,6 @@ get_task_history(14677921)  # Default 30-day history
 get_task_history(14677921, hours=168)  # Last week only
 get_task_history(14677921, hours=24)  # Last 24 hours
 ```
-
 
 ### `get_comments`
 Retrieve comments with optional filtering and pagination.
@@ -359,6 +334,186 @@ Retrieve a specific todo checklist item by ID.
 
 **Properties:**
 - `todo_id` (int): The unique Productive todo checklist item identifier
+
+### Write Tools
+
+### `create_task`
+Create a new task in Productive.
+
+When `READ_ONLY=true`, this tool is blocked globally and returns a write-protection error.
+
+**Properties:**
+- `title` (str, required): Task title
+- `project_id` (int, required): Productive project ID where the task will be created
+- `description` (str, optional): Task description
+- `board_id` (int, optional): Board ID
+- `task_list_id` (int, optional): Task list ID
+- `assignee_id` (int, optional): Assignee/person ID
+- `due_date` (str, optional): Due date (`YYYY-MM-DD`)
+- `status` (str, optional): `open` or `closed` (default: `open`)
+
+### `update_task`
+
+Update an existing task in Productive. Only provided fields are modified (partial PATCH).
+At least one field must be given. When `READ_ONLY=true`, this tool is blocked globally.
+
+**Properties:**
+
+- `task_id` (int, required): Productive task ID to update
+- `title` (str, optional): New task title
+- `description` (str, optional): New task description
+- `assignee_id` (int, optional): New assignee person ID. Use 0 or negative to unassign.
+- `due_date` (str, optional): New due date (`YYYY-MM-DD`)
+- `status` (str, optional): New status — `open` or `closed`
+- `board_id` (int, optional): Move task to this board
+- `task_list_id` (int, optional): Move task to this task list
+
+### `delete_task`
+
+Permanently delete a task from Productive by its ID. This action is irreversible —
+the task and all associated data will be removed. When `READ_ONLY=true`, this tool is
+blocked globally.
+
+**Properties:**
+
+- `task_id` (int, required): Productive task ID to delete
+
+### `create_comment`
+
+Create a new comment on a task or project in Productive. A comment must be attached to
+at least one of task or project. When `READ_ONLY=true`, this tool is blocked globally.
+
+**Properties:**
+
+- `body` (str, required): Comment body text (HTML supported)
+- `task_id` (int, optional): Productive task ID to attach the comment to
+- `project_id` (int, optional): Productive project ID to attach the comment to
+
+### `update_comment`
+
+Update an existing comment in Productive. Only the body attribute can be modified.
+When `READ_ONLY=true`, this tool is blocked globally.
+
+**Properties:**
+
+- `comment_id` (int, required): Productive comment ID to update
+- `body` (str, required): New comment body text (HTML supported)
+
+### `delete_comment`
+
+Permanently delete a comment from Productive by its ID. This action is irreversible —
+the comment will be removed from the task or project. When `READ_ONLY=true`, this tool
+is blocked globally.
+
+**Properties:**
+
+- `comment_id` (int, required): Productive comment ID to delete
+
+### `create_time_entry`
+
+Create a new time entry in Productive for time tracking.
+
+Logs time spent on tasks or services. Either task_id or service_id must be provided.
+When `READ_ONLY=true`, this tool is blocked globally.
+
+**Properties:**
+
+- `date` (str, required): Date for the time entry (`YYYY-MM-DD`)
+- `time` (float, required): Time spent in hours (e.g., 2.5)
+- `person_id` (int, required): Person ID who logged the time
+- `task_id` (int, optional): Task ID to associate the time entry with
+- `service_id` (int, optional): Service ID to associate the time entry with
+- `note` (str, optional): Optional note or description
+
+### `update_time_entry`
+
+Update an existing time entry in Productive. Only provided fields are modified (partial PATCH).
+At least one field must be given. When `READ_ONLY=true`, this tool is blocked globally.
+
+**Properties:**
+
+- `time_entry_id` (int, required): Productive time entry ID to update
+- `date` (str, optional): New date (`YYYY-MM-DD`)
+- `time` (float, optional): New time in hours
+- `person_id` (int, optional): New person ID
+- `task_id` (int, optional): New task ID
+- `service_id` (int, optional): New service ID
+- `note` (str, optional): New note
+
+### `delete_time_entry`
+
+Permanently delete a time entry from Productive by its ID. This action is irreversible —
+the time entry will be removed from time tracking records. When `READ_ONLY=true`, this tool
+is blocked globally.
+
+**Properties:**
+
+- `time_entry_id` (int, required): Productive time entry ID to delete
+
+### `create_page`
+
+Create a new page/document in a Productive project.
+
+Pages are documents that can contain rich text content and are organized within projects.
+When `READ_ONLY=true`, this tool is blocked globally.
+
+**Properties:**
+
+- `title` (str, required): Page title
+- `project_id` (int, required): Productive project ID where the page will be created
+- `content` (str, optional): Page content (HTML supported)
+
+### `update_page`
+
+Update an existing page/document in Productive. Only provided fields are modified (partial PATCH).
+At least one field must be given. When `READ_ONLY=true`, this tool is blocked globally.
+
+**Properties:**
+
+- `page_id` (int, required): Productive page ID to update
+- `title` (str, optional): New page title
+- `content` (str, optional): New page content (HTML supported)
+
+### `delete_page`
+
+Permanently delete a page/document from Productive by its ID. This action is irreversible —
+the page and all its content will be removed. When `READ_ONLY=true`, this tool is blocked globally.
+
+**Properties:**
+
+- `page_id` (int, required): Productive page ID to delete
+
+### `create_todo`
+
+Create a new todo checklist item for a task in Productive.
+
+Todos are checkbox items within tasks for granular tracking of work items.
+When `READ_ONLY=true`, this tool is blocked globally.
+
+**Properties:**
+
+- `content` (str, required): Todo item content/description
+- `task_id` (int, required): Productive task ID to add the todo to
+
+### `update_todo`
+
+Update an existing todo checklist item in Productive. Only provided fields are modified (partial PATCH).
+At least one field must be given. When `READ_ONLY=true`, this tool is blocked globally.
+
+**Properties:**
+
+- `todo_id` (int, required): Productive todo ID to update
+- `content` (str, optional): New todo content
+- `completed` (bool, optional): Mark todo as completed (true) or incomplete (false)
+
+### `delete_todo`
+
+Permanently delete a todo checklist item from Productive by its ID. This action is irreversible —
+the todo item will be removed from the task. When `READ_ONLY=true`, this tool is blocked globally.
+
+**Properties:**
+
+- `todo_id` (int, required): Productive todo ID to delete
 
 ## Output Format
 

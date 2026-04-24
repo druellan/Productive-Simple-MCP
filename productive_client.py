@@ -141,6 +141,18 @@ class ProductiveClient:
         """Get comment by ID"""
         return await self._request("GET", f"/comments/{str(comment_id)}")
 
+    async def create_comment(self, data: dict) -> Dict[str, Any]:
+        """Create a new comment."""
+        return await self._request("POST", "/comments", data=data)
+
+    async def update_comment(self, comment_id: int, data: dict) -> Dict[str, Any]:
+        """Update an existing comment by ID."""
+        return await self._request("PATCH", f"/comments/{str(comment_id)}", data=data)
+
+    async def delete_comment(self, comment_id: int) -> Dict[str, Any]:
+        """Delete a comment by ID (returns 204 No Content)."""
+        return await self._request("DELETE", f"/comments/{str(comment_id)}")
+
     async def get_todos(self, params: Optional[dict] = None) -> Dict[str, Any]:
         """Get all todos"""
         return await self._request("GET", "/todos", params=params)
@@ -194,6 +206,42 @@ class ProductiveClient:
     async def get_time_entries(self, params: Optional[dict] = None) -> Dict[str, Any]:
         """Get time entries with optional filters."""
         return await self._request("GET", "/time_entries", params=params)
+
+    async def create_time_entry(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        """Create a time entry with Productive JSON:API payload."""
+        return await self._request("POST", "/time_entries", data=data)
+
+    async def update_time_entry(self, time_entry_id: int, data: Dict[str, Any]) -> Dict[str, Any]:
+        """Update a time entry with Productive JSON:API payload (PATCH)."""
+        return await self._request("PATCH", f"/time_entries/{str(time_entry_id)}", data=data)
+
+    async def delete_time_entry(self, time_entry_id: int) -> Dict[str, Any]:
+        """Delete a time entry by ID (returns 204 No Content)."""
+        return await self._request("DELETE", f"/time_entries/{str(time_entry_id)}")
+
+    async def create_page(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        """Create a page/document with Productive JSON:API payload."""
+        return await self._request("POST", "/pages", data=data)
+
+    async def update_page(self, page_id: int, data: Dict[str, Any]) -> Dict[str, Any]:
+        """Update a page/document with Productive JSON:API payload (PATCH)."""
+        return await self._request("PATCH", f"/pages/{str(page_id)}", data=data)
+
+    async def delete_page(self, page_id: int) -> Dict[str, Any]:
+        """Delete a page/document by ID (returns 204 No Content)."""
+        return await self._request("DELETE", f"/pages/{str(page_id)}")
+
+    async def create_todo(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        """Create a todo checklist item with Productive JSON:API payload."""
+        return await self._request("POST", "/todos", data=data)
+
+    async def update_todo(self, todo_id: int, data: Dict[str, Any]) -> Dict[str, Any]:
+        """Update a todo checklist item with Productive JSON:API payload (PATCH)."""
+        return await self._request("PATCH", f"/todos/{str(todo_id)}", data=data)
+
+    async def delete_todo(self, todo_id: int) -> Dict[str, Any]:
+        """Delete a todo checklist item by ID (returns 204 No Content)."""
+        return await self._request("DELETE", f"/todos/{str(todo_id)}")
 
     async def quick_search(
         self,

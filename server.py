@@ -10,7 +10,7 @@ import json
 
 from fastmcp import FastMCP, Context
 from fastmcp.server.middleware import Middleware, MiddlewareContext
-from typing import Any, Dict, Annotated
+from typing import Any, Dict, Annotated, Optional
 from pydantic import Field
 from config import config
 from productive_client import client
@@ -68,7 +68,7 @@ mcp = FastMCP(
         "Use get_people to list team members and get_person for individual details."
         "All endpoints paginate (max 200 items). Use filters when possible to reduce scope."
     ),
-    version="0.3.1",
+    version="1.0.0",
     lifespan=lifespan,
     on_duplicate="warn",
 )
@@ -357,15 +357,11 @@ async def get_task(
         int, Field(description="The unique Productive task identifier (internal ID)")
     ],
 ) -> Dict[str, Any]:
-    """Get detailed task information by its internal ID.
-
-    Use this when you have the internal task ID (e.g., 14677418).
-    For looking up tasks by their project-specific number (e.g., #960), use get_project_task instead.
+    """Get detailed task information by its internal task ID (e.g., 14677418).
 
     Returns task details including:
-    - Task title, description, and status (open/closed)
-    - Due date, start date, and creation/update timestamps
-    - Time tracking: initial estimate, remaining time, billable time, and worked time (in minutes)
+    - Title, description, status (open/closed), due date, and timestamps
+    - Time tracking: initial estimate, remaining, billable, and worked time (in minutes)
     - Todo counts: total and open
     """
     return await tools.get_task(ctx=ctx, task_id=task_id)
@@ -471,6 +467,285 @@ async def delete_task(
 
 
 @mcp.tool
+async def create_comment(
+    ctx: Context,
+    body: Annotated[str, Field(description="Comment body text (HTML supported)")],
+    task_id: Annotated[
+        Optional[int],
+        Field(description="Productive task ID to attach the comment to"),
+    ] = None,
+    project_id: Annotated[
+        Optional[int],
+        Field(description="Productive project ID to attach the comment to"),
+    ] = None,
+) -> Dict[str, Any]:
+    """Create a new comment on a task or project in Productive.
+
+    At least one of task_id or project_id must be provided. The comment body
+    supports HTML formatting.
+
+    Write Protection: Globally blocked when READ_ONLY=true. Set READ_ONLY=false to enable.
+
+    Examples:
+        create_comment(body="Great work on this!", task_id=14677921)
+        create_comment(body="<p>Updated status</p>", project_id=343136)
+        create_comment(body="Closing note", task_id=14677921, project_id=343136)
+    """
+    return await tools.create_comment(
+        ctx=ctx, body=body, task_id=task_id, project_id=project_id
+    )
+
+
+@mcp.tool
+async def update_comment(
+    ctx: Context,
+    comment_id: Annotated[int, Field(description="Productive comment ID to update")],
+    body: Annotated[str, Field(description="New comment body text (HTML supported)")],
+) -> Dict[str, Any]:
+    """Update the body of an existing comment in Productive.
+
+    Only the body attribute can be modified on comments.
+
+    Write Protection: Globally blocked when READ_ONLY=true. Set READ_ONLY=false to enable.
+
+    Examples:
+        update_comment(comment_id=98765, body="Updated comment text")
+        update_comment(comment_id=98765, body="<p>Revised <strong>note</strong></p>")
+    """
+    return await tools.update_comment(ctx=ctx, comment_id=comment_id, body=body)
+
+
+@mcp.tool
+async def delete_comment(
+    ctx: Context,
+    comment_id: Annotated[int, Field(description="Productive comment ID to delete")],
+) -> Dict[str, Any]:
+    """Permanently delete a comment from Productive by its ID.
+
+    This action is irreversible — the comment will be removed from the task or project.
+
+    Write Protection: Globally blocked when READ_ONLY=true. Set READ_ONLY=false to enable.
+
+    Examples:
+        delete_comment(comment_id=98765)
+    """
+    return await tools.delete_comment(ctx=ctx, comment_id=comment_id)
+
+
+@mcp.tool
+async def create_time_entry(
+    ctx: Context,
+    date: Annotated[str, Field(description="Date for the time entry (YYYY-MM-DD)")],
+    time: Annotated[float, Field(description="Time spent in hours (e.g., 2.5 for 2.5 hours)")],
+    person_id: Annotated[int, Field(description="Person ID who logged the time")],
+    task_id: Annotated[int, Field(description="Task ID to associate the time entry with")] = None,
+    service_id: Annotated[int, Field(description="Service ID to associate the time entry with")] = None,
+    note: Annotated[str, Field(description="Optional note or description")] = None,
+) -> Dict[str, Any]:
+    """Create a new time entry for time tracking in Productive.
+
+    Logs time spent on tasks or services. Either task_id or service_id must be provided.
+
+    Write Protection: Globally blocked when READ_ONLY=true. Set READ_ONLY=false to enable.
+
+    Examples:
+        create_time_entry(date="2026-04-24", time=2.5, person_id=123, task_id=456)
+        create_time_entry(date="2026-04-24", time=1.0, person_id=123, service_id=789, note="Code review")
+    """
+    return await tools.create_time_entry(
+        ctx=ctx,
+        date=date,
+        time=time,
+        person_id=person_id,
+        task_id=task_id,
+        service_id=service_id,
+        note=note,
+    )
+
+
+@mcp.tool
+async def update_time_entry(
+    ctx: Context,
+    time_entry_id: Annotated[int, Field(description="Productive time entry ID to update")],
+    date: Annotated[str, Field(description="New date (YYYY-MM-DD)")] = None,
+    time: Annotated[float, Field(description="New time in hours")] = None,
+    person_id: Annotated[int, Field(description="New person ID")] = None,
+    task_id: Annotated[int, Field(description="New task ID")] = None,
+    service_id: Annotated[int, Field(description="New service ID")] = None,
+    note: Annotated[str, Field(description="New note")] = None,
+) -> Dict[str, Any]:
+    """Update an existing time entry in Productive.
+
+    Only provided fields are modified (partial PATCH). At least one field must be given.
+
+    Write Protection: Globally blocked when READ_ONLY=true. Set READ_ONLY=false to enable.
+
+    Examples:
+        update_time_entry(time_entry_id=12345, time=3.0)
+        update_time_entry(time_entry_id=12345, date="2026-04-25", note="Updated description")
+    """
+    return await tools.update_time_entry(
+        ctx=ctx,
+        time_entry_id=time_entry_id,
+        date=date,
+        time=time,
+        person_id=person_id,
+        task_id=task_id,
+        service_id=service_id,
+        note=note,
+    )
+
+
+@mcp.tool
+async def delete_time_entry(
+    ctx: Context,
+    time_entry_id: Annotated[int, Field(description="Productive time entry ID to delete")],
+) -> Dict[str, Any]:
+    """Permanently delete a time entry from Productive by its ID.
+
+    This action is irreversible — the time entry will be removed from time tracking records.
+
+    Write Protection: Globally blocked when READ_ONLY=true. Set READ_ONLY=false to enable.
+
+    Examples:
+        delete_time_entry(time_entry_id=12345)
+    """
+    return await tools.delete_time_entry(ctx=ctx, time_entry_id=time_entry_id)
+
+
+@mcp.tool
+async def create_page(
+    ctx: Context,
+    title: Annotated[str, Field(description="Page title")],
+    project_id: Annotated[int, Field(description="Productive project ID where the page will be created")],
+    content: Annotated[str, Field(description="Optional page content (supports HTML)")] = None,
+) -> Dict[str, Any]:
+    """Create a new page/document in a Productive project.
+
+    Pages are documents that can contain rich text content and are organized within projects.
+
+    Write Protection: Globally blocked when READ_ONLY=true. Set READ_ONLY=false to enable.
+
+    Examples:
+        create_page(title="Meeting Notes", project_id=12345)
+        create_page(title="Project Plan", project_id=12345, content="<h1>Project Overview</h1><p>Details...</p>")
+    """
+    return await tools.create_page(
+        ctx=ctx,
+        title=title,
+        project_id=project_id,
+        content=content,
+    )
+
+
+@mcp.tool
+async def update_page(
+    ctx: Context,
+    page_id: Annotated[int, Field(description="Productive page ID to update")],
+    title: Annotated[str, Field(description="New page title")] = None,
+    content: Annotated[str, Field(description="New page content (HTML supported)")] = None,
+) -> Dict[str, Any]:
+    """Update an existing page/document in Productive.
+
+    Only provided fields are modified (partial PATCH). At least one field must be given.
+
+    Write Protection: Globally blocked when READ_ONLY=true. Set READ_ONLY=false to enable.
+
+    Examples:
+        update_page(page_id=67890, title="Updated Meeting Notes")
+        update_page(page_id=67890, content="<h1>Revised Notes</h1><p>New content...</p>")
+    """
+    return await tools.update_page(
+        ctx=ctx,
+        page_id=page_id,
+        title=title,
+        content=content,
+    )
+
+
+@mcp.tool
+async def delete_page(
+    ctx: Context,
+    page_id: Annotated[int, Field(description="Productive page ID to delete")],
+) -> Dict[str, Any]:
+    """Permanently delete a page/document from Productive by its ID.
+
+    This action is irreversible — the page and all its content will be removed.
+
+    Write Protection: Globally blocked when READ_ONLY=true. Set READ_ONLY=false to enable.
+
+    Examples:
+        delete_page(page_id=67890)
+    """
+    return await tools.delete_page(ctx=ctx, page_id=page_id)
+
+
+@mcp.tool
+async def create_todo(
+    ctx: Context,
+    content: Annotated[str, Field(description="Todo item content/description")],
+    task_id: Annotated[int, Field(description="Productive task ID to add the todo to")],
+) -> Dict[str, Any]:
+    """Create a new todo checklist item for a task in Productive.
+
+    Todos are checkbox items within tasks for granular tracking of work items.
+
+    Write Protection: Globally blocked when READ_ONLY=true. Set READ_ONLY=false to enable.
+
+    Examples:
+        create_todo(content="Write unit tests", task_id=14677921)
+        create_todo(content="Update documentation", task_id=14677921)
+    """
+    return await tools.create_todo(
+        ctx=ctx,
+        content=content,
+        task_id=task_id,
+    )
+
+
+@mcp.tool
+async def update_todo(
+    ctx: Context,
+    todo_id: Annotated[int, Field(description="Productive todo ID to update")],
+    content: Annotated[str, Field(description="New todo content")] = None,
+    completed: Annotated[bool, Field(description="Mark todo as completed (true) or incomplete (false)")] = None,
+) -> Dict[str, Any]:
+    """Update an existing todo checklist item in Productive.
+
+    Only provided fields are modified (partial PATCH). At least one field must be given.
+
+    Write Protection: Globally blocked when READ_ONLY=true. Set READ_ONLY=false to enable.
+
+    Examples:
+        update_todo(todo_id=11111, content="Revised item description")
+        update_todo(todo_id=11111, completed=True)
+    """
+    return await tools.update_todo(
+        ctx=ctx,
+        todo_id=todo_id,
+        content=content,
+        completed=completed,
+    )
+
+
+@mcp.tool
+async def delete_todo(
+    ctx: Context,
+    todo_id: Annotated[int, Field(description="Productive todo ID to delete")],
+) -> Dict[str, Any]:
+    """Permanently delete a todo checklist item from Productive by its ID.
+
+    This action is irreversible — the todo item will be removed from the task.
+
+    Write Protection: Globally blocked when READ_ONLY=true. Set READ_ONLY=false to enable.
+
+    Examples:
+        delete_todo(todo_id=11111)
+    """
+    return await tools.delete_todo(ctx=ctx, todo_id=todo_id)
+
+
+@mcp.tool
 async def get_task_history(
     ctx: Context,
     task_id: Annotated[
@@ -496,7 +771,7 @@ async def get_task_history(
     Examples:
         get_task_history(14677921)  # Default 30-day history
         get_task_history(14677921, hours=168)  # Last week only
-        get_task_history(14677921,1 hours=24)  # Last 24 hours
+        get_task_history(14677921, hours=24)  # Last 24 hours
     """
     return await tools.get_task_history(ctx, task_id, hours)
 
@@ -586,14 +861,16 @@ async def get_comments(
         ),
     ] = None,
 ) -> Dict[str, Any]:
-    """Get all comments across projects and tasks with full context.
+    """Get comments with optional filtering by project or task.
 
-    Returns comprehensive comment data including:
+    Returns:
     - Comment text, author, and timestamp
-    - Parent entity (project, task, or other) with details
+    - Parent entity (project or task) with details
     - Discussion threads and replies
     - Attachments and file references
     - Mentions of team members or clients
+
+    Use extra_filters with filter[discussion_id][eq] to target a specific thread.
     """
     return await tools.get_comments(
         ctx,
@@ -641,14 +918,16 @@ async def get_todos(
         ),
     ] = None,
 ) -> Dict[str, Any]:
-    """Get all todo checklist items across all tasks and projects.
+    """Get todo checklist items with optional filtering by task.
 
-    Returns comprehensive todo data including:
-    - Checkbox items within tasks for granular tracking
-    - Completion status and assignee information
+    Returns:
+    - Checkbox item text and completion status
+    - Assignee information
     - Parent task details with project context
     - Due dates and priority relative to parent task
     - Estimated vs actual time for checklist items
+
+    Filter by task_id to get all checklist items for a specific task.
     """
     return await tools.get_todos(
         ctx,
@@ -664,9 +943,9 @@ async def get_todo(
     ctx: Context,
     todo_id: Annotated[int, Field(description="Productive todo ID")],
 ) -> Dict[str, Any]:
-    """Get specific todo checklist item details with full task context.
+    """Get a specific todo checklist item by ID.
 
-    Returns detailed todo information including:
+    Returns:
     - Checkbox item text and completion status
     - Parent task with project and client details
     - Assignee and team member information
@@ -691,16 +970,16 @@ async def get_pages(
         int, Field(description="Optional number of pages per page (max 200)")
     ] = None,
 ) -> Dict[str, Any]:
-    """Get all pages/documents with optional filtering.
+    """Get pages/documents with optional filtering by project or creator.
 
     Pages in Productive are documents that can contain rich text content,
     attachments, and are organized within projects.
 
-    Returns:
-        Dictionary containing pages with content, metadata, and relationships
+    Returns page titles, content, metadata, and project relationships.
 
-    Example:
-        get_pages(project_id=1234)  # Get all pages for a specific project
+    Examples:
+        get_pages(project_id=1234)  # All pages in a project
+        get_pages(creator_id=567)   # Pages created by a specific person
     """
     return await tools.get_pages(
         ctx,
@@ -716,11 +995,7 @@ async def get_page(
     ctx: Context,
     page_id: Annotated[int, Field(description="The unique Productive page identifier")],
 ) -> Dict[str, Any]:
-    """Get specific page/document details with full content.
-
-    Returns:
-        Dictionary with complete page details including JSON-formatted content
-    """
+    """Get a specific page/document by ID, including full content body."""
     return await tools.get_page(ctx, page_id)
 
 
@@ -732,9 +1007,9 @@ async def get_people(
         int, Field(description="Optional number of people per page (max 200)")
     ] = None,
 ) -> Dict[str, Any]:
-    """Get all team members/people with optional pagination.
+    """Get all team members with optional pagination.
 
-    Returns team member data including:
+    Returns:
     - Person ID, name, and email
     - Role and title information
     - Last seen and join dates
@@ -754,9 +1029,9 @@ async def get_person(
         int, Field(description="The unique Productive person identifier")
     ],
 ) -> Dict[str, Any]:
-    """Get detailed information about a specific team member/person.
+    """Get detailed information about a specific team member by ID.
 
-    Returns comprehensive person details including:
+    Returns:
     - Full name, email, and contact information
     - Role, title, and organizational details
     - Activity timestamps (joined, last seen)
@@ -777,14 +1052,15 @@ async def get_attachments(
         dict, Field(description="Additional Productive query filters using API syntax")
     ] = None,
 ) -> Dict[str, Any]:
-    """Get all attachments/files with optional filtering.
+    """Get attachment/file metadata with optional filtering.
 
-    Attachments are files (PDFs, images, documents) that can be associated with
-    various Productive entities like tasks, comments, expenses, etc.
+    Attachments are files (PDFs, images, documents) associated with tasks, comments, expenses, etc.
 
     Returns:
-        Dictionary containing attachment metadata (name, type, size, relationships)
-        Note: This provides metadata only, not actual file content
+    - File name, type, and size
+    - Associated entity relationships (task, project, etc.)
+
+    Note: returns metadata only — actual file content is not included.
     """
     return await tools.get_attachments(
         ctx, page_number=page_number, page_size=page_size, extra_filters=extra_filters
