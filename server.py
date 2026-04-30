@@ -68,7 +68,7 @@ mcp = FastMCP(
         "Use get_people to list team members and get_person for individual details."
         "All endpoints paginate (max 200 items). Use filters when possible to reduce scope."
     ),
-    version="1.0.0",
+    version="1.0.0 RC1",
     lifespan=lifespan,
     on_duplicate="warn",
 )
@@ -120,7 +120,7 @@ async def quick_search(
 
 
 @mcp.tool
-async def get_recent_activity(
+async def list_recent_activity(
     ctx: Context,
     hours: Annotated[
         int,
@@ -165,16 +165,16 @@ async def get_recent_activity(
     Returns recent changes, task updates, comments, new documents and activities in chronological order.
 
     Examples:
-        get_recent_activity()  # Last 24 hours, all activity
-        get_recent_activity(hours=168)  # Last week
-        get_recent_activity(hours=48, project_id=343136)  # Last 2 days on specific project
-        get_recent_activity(hours=24, user_id=12345)  # What a specific user did today
-        get_recent_activity(hours=24, activity_type=1)  # Only comments from last day
-        get_recent_activity(hours=168, item_type='Task')  # Task activities from last week
-        get_recent_activity(hours=168, event_type='edit')  # Task edits from last week
-        get_tasks(extra_filters={'filter[status][eq]': 2}, sort='-updated_at', page_size=10)  # Recently closed tasks
+        list_recent_activity()  # Last 24 hours, all activity
+        list_recent_activity(hours=168)  # Last week
+        list_recent_activity(hours=48, project_id=343136)  # Last 2 days on specific project
+        list_recent_activity(hours=24, user_id=12345)  # What a specific user did today
+        list_recent_activity(hours=24, activity_type=1)  # Only comments from last day
+        list_recent_activity(hours=168, item_type='Task')  # Task activities from last week
+        list_recent_activity(hours=168, event_type='edit')  # Task edits from last week
+        list_tasks(extra_filters={'filter[status][eq]': 2}, sort='-updated_at', page_size=10)  # Recently closed tasks
     """
-    return await tools.get_recent_activity(
+    return await tools.list_recent_activity(
         ctx,
         hours=hours,
         user_id=user_id,
@@ -188,8 +188,8 @@ async def get_recent_activity(
 
 
 @mcp.tool
-async def get_projects(ctx: Context) -> Dict[str, Any]:
-    """Get all projects with basic information.
+async def list_projects(ctx: Context) -> Dict[str, Any]:
+    """List all projects with basic information.
 
     Returns project data including:
     - Project ID, name, and number
@@ -197,7 +197,7 @@ async def get_projects(ctx: Context) -> Dict[str, Any]:
     - Archived status (if applicable)
     - Webapp URL for direct access
     """
-    return await tools.get_projects(ctx)
+    return await tools.list_projects(ctx)
 
 
 @mcp.tool
@@ -302,7 +302,7 @@ async def list_time_entries(
 
 
 @mcp.tool
-async def get_tasks(
+async def list_tasks(
     ctx: Context,
     project_id: Annotated[int, Field(description="Filter tasks by project ID")] = None,
     user_id: Annotated[
@@ -325,7 +325,7 @@ async def get_tasks(
         ),
     ] = None,
 ) -> Dict[str, Any]:
-    """Get tasks with optional filtering and pagination.
+    """List tasks with optional filtering and pagination.
 
     Supports filtering by project, assignee, status, and other criteria.
     All parameters are optional - omit to fetch all tasks.
@@ -339,7 +339,7 @@ async def get_tasks(
     Returns:
         Dictionary of tasks matching the provided filters
     """
-    return await tools.get_tasks(
+    return await tools.list_tasks(
         ctx,
         page_number=page_number,
         page_size=page_size,
@@ -367,7 +367,6 @@ async def get_task(
     return await tools.get_task(ctx=ctx, task_id=task_id)
 
 
-@mcp.tool
 async def create_task(
     ctx: Context,
     title: Annotated[str, Field(description="Task title")],
@@ -383,8 +382,6 @@ async def create_task(
 
     Accepts title and project ID (required), plus optional description, board/task list
     assignment, assignee, and due date. Returns the created task object with full details.
-
-    Write Protection: Globally blocked when READ_ONLY=true. Set READ_ONLY=false to enable.
 
     Examples:
         create_task(title="Fix login bug", project_id=12345)
@@ -403,7 +400,6 @@ async def create_task(
     )
 
 
-@mcp.tool
 async def update_task(
     ctx: Context,
     task_id: Annotated[int, Field(description="Productive task ID to update")],
@@ -428,8 +424,6 @@ async def update_task(
     Supports updating title, description, assignee, due date, status, board, and task list
     in a single call. To unassign a task, pass assignee_id as 0 or a negative number.
 
-    Write Protection: Globally blocked when READ_ONLY=true. Set READ_ONLY=false to enable.
-
     Examples:
         update_task(task_id=14677921, title="Updated title")
         update_task(task_id=14677921, status="closed", assignee_id=0)
@@ -448,7 +442,6 @@ async def update_task(
     )
 
 
-@mcp.tool
 async def delete_task(
     ctx: Context,
     task_id: Annotated[int, Field(description="Productive task ID to delete")],
@@ -458,15 +451,12 @@ async def delete_task(
     This action is irreversible — the task and all associated data (comments, todos,
     time entries) will be removed. Use with caution.
 
-    Write Protection: Globally blocked when READ_ONLY=true. Set READ_ONLY=false to enable.
-
     Examples:
         delete_task(task_id=14677921)
     """
     return await tools.delete_task(ctx=ctx, task_id=task_id)
 
 
-@mcp.tool
 async def create_comment(
     ctx: Context,
     body: Annotated[str, Field(description="Comment body text (HTML supported)")],
@@ -484,8 +474,6 @@ async def create_comment(
     At least one of task_id or project_id must be provided. The comment body
     supports HTML formatting.
 
-    Write Protection: Globally blocked when READ_ONLY=true. Set READ_ONLY=false to enable.
-
     Examples:
         create_comment(body="Great work on this!", task_id=14677921)
         create_comment(body="<p>Updated status</p>", project_id=343136)
@@ -496,7 +484,6 @@ async def create_comment(
     )
 
 
-@mcp.tool
 async def update_comment(
     ctx: Context,
     comment_id: Annotated[int, Field(description="Productive comment ID to update")],
@@ -506,8 +493,6 @@ async def update_comment(
 
     Only the body attribute can be modified on comments.
 
-    Write Protection: Globally blocked when READ_ONLY=true. Set READ_ONLY=false to enable.
-
     Examples:
         update_comment(comment_id=98765, body="Updated comment text")
         update_comment(comment_id=98765, body="<p>Revised <strong>note</strong></p>")
@@ -515,7 +500,6 @@ async def update_comment(
     return await tools.update_comment(ctx=ctx, comment_id=comment_id, body=body)
 
 
-@mcp.tool
 async def delete_comment(
     ctx: Context,
     comment_id: Annotated[int, Field(description="Productive comment ID to delete")],
@@ -524,15 +508,12 @@ async def delete_comment(
 
     This action is irreversible — the comment will be removed from the task or project.
 
-    Write Protection: Globally blocked when READ_ONLY=true. Set READ_ONLY=false to enable.
-
     Examples:
         delete_comment(comment_id=98765)
     """
     return await tools.delete_comment(ctx=ctx, comment_id=comment_id)
 
 
-@mcp.tool
 async def create_time_entry(
     ctx: Context,
     date: Annotated[str, Field(description="Date for the time entry (YYYY-MM-DD)")],
@@ -545,8 +526,6 @@ async def create_time_entry(
     """Create a new time entry for time tracking in Productive.
 
     Logs time spent on tasks or services. Either task_id or service_id must be provided.
-
-    Write Protection: Globally blocked when READ_ONLY=true. Set READ_ONLY=false to enable.
 
     Examples:
         create_time_entry(date="2026-04-24", time=2.5, person_id=123, task_id=456)
@@ -563,7 +542,6 @@ async def create_time_entry(
     )
 
 
-@mcp.tool
 async def update_time_entry(
     ctx: Context,
     time_entry_id: Annotated[int, Field(description="Productive time entry ID to update")],
@@ -577,8 +555,6 @@ async def update_time_entry(
     """Update an existing time entry in Productive.
 
     Only provided fields are modified (partial PATCH). At least one field must be given.
-
-    Write Protection: Globally blocked when READ_ONLY=true. Set READ_ONLY=false to enable.
 
     Examples:
         update_time_entry(time_entry_id=12345, time=3.0)
@@ -596,7 +572,6 @@ async def update_time_entry(
     )
 
 
-@mcp.tool
 async def delete_time_entry(
     ctx: Context,
     time_entry_id: Annotated[int, Field(description="Productive time entry ID to delete")],
@@ -605,15 +580,12 @@ async def delete_time_entry(
 
     This action is irreversible — the time entry will be removed from time tracking records.
 
-    Write Protection: Globally blocked when READ_ONLY=true. Set READ_ONLY=false to enable.
-
     Examples:
         delete_time_entry(time_entry_id=12345)
     """
     return await tools.delete_time_entry(ctx=ctx, time_entry_id=time_entry_id)
 
 
-@mcp.tool
 async def create_page(
     ctx: Context,
     title: Annotated[str, Field(description="Page title")],
@@ -623,8 +595,6 @@ async def create_page(
     """Create a new page/document in a Productive project.
 
     Pages are documents that can contain rich text content and are organized within projects.
-
-    Write Protection: Globally blocked when READ_ONLY=true. Set READ_ONLY=false to enable.
 
     Examples:
         create_page(title="Meeting Notes", project_id=12345)
@@ -638,7 +608,6 @@ async def create_page(
     )
 
 
-@mcp.tool
 async def update_page(
     ctx: Context,
     page_id: Annotated[int, Field(description="Productive page ID to update")],
@@ -648,8 +617,6 @@ async def update_page(
     """Update an existing page/document in Productive.
 
     Only provided fields are modified (partial PATCH). At least one field must be given.
-
-    Write Protection: Globally blocked when READ_ONLY=true. Set READ_ONLY=false to enable.
 
     Examples:
         update_page(page_id=67890, title="Updated Meeting Notes")
@@ -663,7 +630,6 @@ async def update_page(
     )
 
 
-@mcp.tool
 async def delete_page(
     ctx: Context,
     page_id: Annotated[int, Field(description="Productive page ID to delete")],
@@ -672,15 +638,12 @@ async def delete_page(
 
     This action is irreversible — the page and all its content will be removed.
 
-    Write Protection: Globally blocked when READ_ONLY=true. Set READ_ONLY=false to enable.
-
     Examples:
         delete_page(page_id=67890)
     """
     return await tools.delete_page(ctx=ctx, page_id=page_id)
 
 
-@mcp.tool
 async def create_todo(
     ctx: Context,
     content: Annotated[str, Field(description="Todo item content/description")],
@@ -689,8 +652,6 @@ async def create_todo(
     """Create a new todo checklist item for a task in Productive.
 
     Todos are checkbox items within tasks for granular tracking of work items.
-
-    Write Protection: Globally blocked when READ_ONLY=true. Set READ_ONLY=false to enable.
 
     Examples:
         create_todo(content="Write unit tests", task_id=14677921)
@@ -703,7 +664,6 @@ async def create_todo(
     )
 
 
-@mcp.tool
 async def update_todo(
     ctx: Context,
     todo_id: Annotated[int, Field(description="Productive todo ID to update")],
@@ -713,8 +673,6 @@ async def update_todo(
     """Update an existing todo checklist item in Productive.
 
     Only provided fields are modified (partial PATCH). At least one field must be given.
-
-    Write Protection: Globally blocked when READ_ONLY=true. Set READ_ONLY=false to enable.
 
     Examples:
         update_todo(todo_id=11111, content="Revised item description")
@@ -728,7 +686,6 @@ async def update_todo(
     )
 
 
-@mcp.tool
 async def delete_todo(
     ctx: Context,
     todo_id: Annotated[int, Field(description="Productive todo ID to delete")],
@@ -736,8 +693,6 @@ async def delete_todo(
     """Permanently delete a todo checklist item from Productive by its ID.
 
     This action is irreversible — the todo item will be removed from the task.
-
-    Write Protection: Globally blocked when READ_ONLY=true. Set READ_ONLY=false to enable.
 
     Examples:
         delete_todo(todo_id=11111)
@@ -842,7 +797,7 @@ async def get_task_history(
 
 
 @mcp.tool
-async def get_comments(
+async def list_comments(
     ctx: Context,
     project_id: Annotated[
         int, Field(description="Productive project ID to filter comments by")
@@ -861,7 +816,7 @@ async def get_comments(
         ),
     ] = None,
 ) -> Dict[str, Any]:
-    """Get comments with optional filtering by project or task.
+    """List comments with optional filtering by project or task.
 
     Returns:
     - Comment text, author, and timestamp
@@ -872,7 +827,7 @@ async def get_comments(
 
     Use extra_filters with filter[discussion_id][eq] to target a specific thread.
     """
-    return await tools.get_comments(
+    return await tools.list_comments(
         ctx,
         project_id=project_id,
         task_id=task_id,
@@ -902,7 +857,7 @@ async def get_comments(
 
 
 @mcp.tool
-async def get_todos(
+async def list_todos(
     ctx: Context,
     task_id: Annotated[
         int, Field(description="Productive task ID to filter todos by")
@@ -918,7 +873,7 @@ async def get_todos(
         ),
     ] = None,
 ) -> Dict[str, Any]:
-    """Get todo checklist items with optional filtering by task.
+    """List todo checklist items with optional filtering by task.
 
     Returns:
     - Checkbox item text and completion status
@@ -929,7 +884,7 @@ async def get_todos(
 
     Filter by task_id to get all checklist items for a specific task.
     """
-    return await tools.get_todos(
+    return await tools.list_todos(
         ctx,
         task_id=task_id,
         page_number=page_number,
@@ -957,7 +912,7 @@ async def get_todo(
 
 
 @mcp.tool
-async def get_pages(
+async def list_pages(
     ctx: Context,
     project_id: Annotated[
         int, Field(description="Optional project ID to filter pages by")
@@ -970,7 +925,7 @@ async def get_pages(
         int, Field(description="Optional number of pages per page (max 200)")
     ] = None,
 ) -> Dict[str, Any]:
-    """Get pages/documents with optional filtering by project or creator.
+    """List pages/documents with optional filtering by project or creator.
 
     Pages in Productive are documents that can contain rich text content,
     attachments, and are organized within projects.
@@ -978,10 +933,10 @@ async def get_pages(
     Returns page titles, content, metadata, and project relationships.
 
     Examples:
-        get_pages(project_id=1234)  # All pages in a project
-        get_pages(creator_id=567)   # Pages created by a specific person
+        list_pages(project_id=1234)  # All pages in a project
+        list_pages(creator_id=567)   # Pages created by a specific person
     """
-    return await tools.get_pages(
+    return await tools.list_pages(
         ctx,
         project_id=project_id,
         creator_id=creator_id,
@@ -1000,14 +955,14 @@ async def get_page(
 
 
 @mcp.tool
-async def get_people(
+async def list_people(
     ctx: Context,
     page_number: Annotated[int, Field(description="Page number for pagination")] = None,
     page_size: Annotated[
         int, Field(description="Optional number of people per page (max 200)")
     ] = None,
 ) -> Dict[str, Any]:
-    """Get all team members with optional pagination.
+    """List all team members with optional pagination.
 
     Returns:
     - Person ID, name, and email
@@ -1015,7 +970,7 @@ async def get_people(
     - Last seen and join dates
     - Avatar and contact information
     """
-    return await tools.get_people(
+    return await tools.list_people(
         ctx,
         page_number=page_number,
         page_size=page_size,
@@ -1042,7 +997,7 @@ async def get_person(
 
 
 @mcp.tool
-async def get_attachments(
+async def list_attachments(
     ctx: Context,
     page_number: Annotated[int, Field(description="Page number for pagination")] = None,
     page_size: Annotated[
@@ -1052,7 +1007,7 @@ async def get_attachments(
         dict, Field(description="Additional Productive query filters using API syntax")
     ] = None,
 ) -> Dict[str, Any]:
-    """Get attachment/file metadata with optional filtering.
+    """List attachment/file metadata with optional filtering.
 
     Attachments are files (PDFs, images, documents) associated with tasks, comments, expenses, etc.
 
@@ -1062,9 +1017,30 @@ async def get_attachments(
 
     Note: returns metadata only — actual file content is not included.
     """
-    return await tools.get_attachments(
+    return await tools.list_attachments(
         ctx, page_number=page_number, page_size=page_size, extra_filters=extra_filters
     )
+
+
+if not config.read_only:
+    for _write_tool in [
+        create_task,
+        update_task,
+        delete_task,
+        create_comment,
+        update_comment,
+        delete_comment,
+        create_time_entry,
+        update_time_entry,
+        delete_time_entry,
+        create_page,
+        update_page,
+        delete_page,
+        create_todo,
+        update_todo,
+        delete_todo,
+    ]:
+        mcp.tool(_write_tool)
 
 
 def main() -> None:

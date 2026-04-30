@@ -10,23 +10,23 @@ This implementation is optimized for read-focused operations, with optional guar
 ## Features
 
 ### Read Tools
-- **Get Projects**: Retrieve all projects with basic information
+- **List Projects**: Retrieve all projects with basic information
 - **List Folders**: Retrieve folders within a project
 - **Get Folder**: Retrieve a specific folder by ID
 - **List Workflow Statuses**: Retrieve workflow statuses with optional filters
 - **List Time Entries**: Retrieve time entries with optional date and relationship filters
-- **Get Tasks**: Retrieve tasks with filtering and pagination
+- **List Tasks**: Retrieve tasks with filtering and pagination
 - **Get Task**: Retrieve a specific task by internal ID
 - **Get Task History**: Retrieve task status changes, assignments, milestones, and activity summaries
-- **Get Comments**: Retrieve comments with filtering
-- **Get Pages**: Retrieve pages/documents with filtering
+- **List Comments**: Retrieve comments with filtering
+- **List Pages**: Retrieve pages/documents with filtering
 - **Get Page**: Retrieve a specific page/document by ID
-- **Get Attachments**: Retrieve attachments/files with filtering
-- **Get Todos**: Retrieve todo checklist items with filtering
+- **List Attachments**: Retrieve attachments/files with filtering
+- **List Todos**: Retrieve todo checklist items with filtering
 - **Get Todo**: Retrieve a specific todo by ID
-- **Get People**: Retrieve people/team members with pagination
+- **List People**: Retrieve people/team members with pagination
 - **Get Person**: Retrieve a specific person by ID
-- **Get Recent Updates**: Summarized activity feed for status updates
+- **List Recent Activity**: Summarized activity feed for status updates
 - **Quick Search**: Fast, comprehensive search across projects, tasks, pages, and actions
 
 ### Write Tools (blocked when READ_ONLY=true)
@@ -75,7 +75,7 @@ The server uses environment variables for configuration:
 - `PRODUCTIVE_ORGANIZATION`: Your Productive organization ID (required)
 - `PRODUCTIVE_BASE_URL`: Base URL for Productive API (default: https://api.productive.io/api/v2)
 - `PRODUCTIVE_TIMEOUT`: Request timeout in seconds (default: 30)
-- `OUTPUT_FORMAT`: Output format for tool responses ("toon" or "json", default: "json")
+- `OUTPUT_FORMAT`: Output format for tool responses ("toon" or "json", default: "toon")
 - `READ_ONLY`: Global write-protection toggle for write tools — create_task, update_task, delete_task, create_comment, update_comment, delete_comment, create_time_entry, update_time_entry, delete_time_entry, create_page, update_page, delete_page, create_todo, update_todo, delete_todo ("true" or "false", default: "true")
 
 ## Usage
@@ -146,7 +146,7 @@ The server uses environment variables for configuration:
 
 ### Read Tools
 
-### `get_projects`
+### `list_projects`
 Retrieve all projects with basic information.
 
 **Properties:**
@@ -192,7 +192,7 @@ Retrieve time entries with optional date and relationship filters.
 - `page_number` (int, optional): Page number for pagination
 - `limit` (int, optional): Maximum number of entries to return (default: 50, max: 200)
 
-### `get_people`
+### `list_people`
 Retrieve people/team members with optional pagination.
 
 **Properties:**
@@ -205,7 +205,7 @@ Retrieve a specific person by ID.
 **Properties:**
 - `person_id` (int): The unique Productive person identifier
 
-### `get_tasks`
+### `list_tasks`
 Retrieve tasks with optional filtering and pagination.
 
 **Properties:**
@@ -242,7 +242,7 @@ get_task_history(14677921, hours=168)  # Last week only
 get_task_history(14677921, hours=24)  # Last 24 hours
 ```
 
-### `get_comments`
+### `list_comments`
 Retrieve comments with optional filtering and pagination.
 
 **Properties:**
@@ -252,7 +252,7 @@ Retrieve comments with optional filtering and pagination.
 - `page_size` (int, optional): Page size for pagination
 - `extra_filters` (dict, optional): Additional Productive API filters (e.g., `{'filter[discussion_id]': '123'}`)
 
-### `get_pages`
+### `list_pages`
 Retrieve pages/documents with optional filtering and pagination.
 
 **Properties:**
@@ -267,7 +267,7 @@ Retrieve a specific page/document by ID.
 **Properties:**
 - `page_id` (int): The unique Productive page identifier
 
-### `get_attachments`
+### `list_attachments`
 Retrieve attachments/files with optional filtering and pagination.
 
 **Properties:**
@@ -275,7 +275,7 @@ Retrieve attachments/files with optional filtering and pagination.
 - `page_size` (int, optional): Page size for pagination
 - `extra_filters` (dict, optional): Additional Productive API filters
 
-### `get_recent_activity`
+### `list_recent_activity`
 Get a summarized feed of recent activities and updates. Perfect for status updates.
 
 **Properties:**
@@ -288,7 +288,7 @@ Get a summarized feed of recent activities and updates. Perfect for status updat
 - `task_id` (int, optional): Filter by specific task ID
 - `max_results` (int, optional): Maximum number of activities to return (default: 100, max: 200)
 
-### `get_todos`
+### `list_todos`
 Retrieve todo checklist items with optional filtering and pagination.
 
 **Properties:**
@@ -519,8 +519,8 @@ the todo item will be removed from the task. When `READ_ONLY=true`, this tool is
 
 All tools return filtered data optimized for LLM processing. The output format can be configured via the `OUTPUT_FORMAT` environment variable:
 
-- **JSON** (default): Standard JSON format for compatibility with existing tools and workflows
-- **TOON**: Token-Optimized Object Notation reduces token consumption by 30-60% compared to JSON, ideal for LLM interactions
+- **TOON** (default): Token-Optimized Object Notation reduces token consumption by 30-60% compared to JSON, ideal for LLM interactions
+- **JSON**: Standard JSON format for compatibility with existing tools and workflows
 
 All tools return filtered data optimized for LLM processing:
 

@@ -4,7 +4,7 @@ from typing import Any, Dict
 
 from config import config
 from productive_client import client, ProductiveAPIError
-from utils import filter_response, filter_task_list_response, filter_page_list_response
+from utils import filter_response, filter_task_list_response, filter_page_list_response, get_webapp_url
 
 
 
@@ -204,7 +204,7 @@ async def list_time_entries(
         raise e
 
 
-async def get_projects(ctx: Context) -> ToolResult:
+async def list_projects(ctx: Context) -> ToolResult:
     """Fetch projects and post-process response for LLM safety.
 
     Developer notes:
@@ -228,7 +228,7 @@ async def get_projects(ctx: Context) -> ToolResult:
         raise e
 
 
-async def get_tasks(ctx: Context, page_number: int = None, page_size: int = config.items_per_page, sort: str = "-last_activity_at", project_id: int = None, user_id: int = None, extra_filters: dict = None) -> ToolResult:
+async def list_tasks(ctx: Context, page_number: int = None, page_size: int = config.items_per_page, sort: str = "-last_activity_at", project_id: int = None, user_id: int = None, extra_filters: dict = None) -> ToolResult:
     """
     List tasks with optional filters and pagination.
 
@@ -380,7 +380,7 @@ async def get_project_task(ctx: Context, task_number: str, project_id: int) -> T
         raise e
 
 
-async def get_comments(ctx: Context, project_id: int = None, task_id: int = None, page_number: int = None, page_size: int = config.items_per_page, extra_filters: dict = None) -> ToolResult:
+async def list_comments(ctx: Context, project_id: int = None, task_id: int = None, page_number: int = None, page_size: int = config.items_per_page, extra_filters: dict = None) -> ToolResult:
     """List comments with optional filters and pagination.
 
     Developer notes:
@@ -438,7 +438,7 @@ async def get_comment(ctx: Context, comment_id: int) -> ToolResult:
         raise e
 
 
-async def get_todos(ctx: Context, task_id: int = None, page_number: int = None, page_size: int = config.items_per_page, extra_filters: dict = None) -> ToolResult:
+async def list_todos(ctx: Context, task_id: int = None, page_number: int = None, page_size: int = config.items_per_page, extra_filters: dict = None) -> ToolResult:
     """List todo checklist items with optional filters.
 
     Developer notes:
@@ -491,7 +491,7 @@ async def get_todo(ctx: Context, todo_id: int) -> ToolResult:
         raise e
 
 
-async def get_recent_activity(ctx: Context, hours: int = 24, user_id: int = None, project_id: int = None, activity_type: int = None, item_type: str = None, event_type: str = None, task_id: int = None, max_results: int = None) -> ToolResult:
+async def list_recent_activity(ctx: Context, hours: int = 24, user_id: int = None, project_id: int = None, activity_type: int = None, item_type: str = None, event_type: str = None, task_id: int = None, max_results: int = None) -> ToolResult:
     """Summarize recent activities within a time window.
 
     Developer notes:
@@ -590,7 +590,7 @@ async def get_task_history(
     - Aggregates historical data from activities and task events
     - Returns status history, assignment history, milestones, and activity summary
     - Ignores unavailable data gracefully (empty arrays/null values)
-    - Uses get_recent_activity with task_id filter for historical data
+    - Uses list_recent_activity with task_id filter for historical data
     - Now extracts status transitions from changeset (workflow_status_id)
     """
     try:
@@ -603,7 +603,7 @@ async def get_task_history(
             return {"task_id": task_id, "error": "Task not found", "status_history": [], "assignment_history": [], "milestones": [], "activity_summary": {}}
 
         # Get recent activities for this task (comprehensive history)
-        activity_result = await get_recent_activity(
+        activity_result = await list_recent_activity(
             ctx,
             hours=hours,
             task_id=task_id,
@@ -696,7 +696,7 @@ def _summarize_activities(activities: list) -> dict:
     return summary
 
 
-async def get_pages(ctx: Context, project_id: int = None, creator_id: int = None, page_number: int = None, page_size: int = config.items_per_page) -> ToolResult:
+async def list_pages(ctx: Context, project_id: int = None, creator_id: int = None, page_number: int = None, page_size: int = config.items_per_page) -> ToolResult:
     """List pages (docs) with optional filters and pagination.
 
     Developer notes:
@@ -755,7 +755,7 @@ async def get_page(ctx: Context, page_id: int) -> ToolResult:
         raise e
 
 
-async def get_attachments(ctx: Context, page_number: int = None, page_size: int = config.items_per_page, extra_filters: dict = None) -> ToolResult:
+async def list_attachments(ctx: Context, page_number: int = None, page_size: int = config.items_per_page, extra_filters: dict = None) -> ToolResult:
     """List attachments with optional filters and pagination (metadata only).
 
     Developer notes:
@@ -802,7 +802,7 @@ async def get_attachment(ctx: Context, attachment_id: int) -> ToolResult:
         await ctx.error(f"Unexpected error fetching attachment: {str(e)}")
 
 
-async def get_people(ctx: Context, page_number: int = None, page_size: int = config.items_per_page) -> ToolResult:
+async def list_people(ctx: Context, page_number: int = None, page_size: int = config.items_per_page) -> ToolResult:
     """List all team members/people with optional pagination.
 
     Developer notes:
@@ -898,7 +898,7 @@ async def quick_search(ctx: Context, query: str, search_types: list[str] = None,
             record_id = attributes.get("record_id", "")
 
             # Construct webapp URL (use raw record_type/record_id path; task hydration adds exact URL later)
-            webapp_url = f"https://app.productive.io/27956-lineout/{record_type}s/{record_id}"
+            webapp_url = get_webapp_url(f"{record_type}s", record_id)
 
             filtered_item = {
                 "record_id": record_id,

@@ -1,4 +1,7 @@
 import os
+import logging
+
+logger = logging.getLogger(__name__)
 
 class Config:
     """Configuration for Productive MCP Server"""
@@ -9,9 +12,17 @@ class Config:
         )
         self.base_url = os.getenv("PRODUCTIVE_BASE_URL", "https://api.productive.io/api/v2")
         self.timeout = int(os.getenv("PRODUCTIVE_TIMEOUT", "30"))
-        self.organization = int(os.getenv("PRODUCTIVE_ORGANIZATION", ""))
+        org_value = os.getenv("PRODUCTIVE_ORGANIZATION")
+        if org_value:
+            try:
+                self.organization = int(org_value)
+            except ValueError:
+                logger.warning(f"PRODUCTIVE_ORGANIZATION must be a valid integer, got: {org_value}")
+                self.organization = None
+        else:
+            self.organization = None
         self.items_per_page = int(os.getenv("PRODUCTIVE_ITEMS_PER_PAGE", "50"))
-        self.output_format = os.getenv("OUTPUT_FORMAT", "json")
+        self.output_format = os.getenv("OUTPUT_FORMAT", "toon")
         self.read_only = self._parse_bool_env("READ_ONLY", default=True)
 
     @staticmethod
