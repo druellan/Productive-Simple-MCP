@@ -76,7 +76,11 @@ mcp = FastMCP(
 mcp.add_middleware(OutputSerializationMiddleware())
 
 
-@mcp.tool
+@mcp.tool(
+    annotations={
+        "readOnlyHint": True,
+    },
+)
 async def quick_search(
     ctx: Context,
     query: Annotated[str, Field(description="Search query string")],
@@ -119,7 +123,11 @@ async def quick_search(
     )
 
 
-@mcp.tool
+@mcp.tool(
+    annotations={
+        "readOnlyHint": True,
+    },
+)
 async def list_recent_activity(
     ctx: Context,
     hours: Annotated[
@@ -187,7 +195,11 @@ async def list_recent_activity(
     )
 
 
-@mcp.tool
+@mcp.tool(
+    annotations={
+        "readOnlyHint": True,
+    },
+)
 async def list_projects(ctx: Context) -> Dict[str, Any]:
     """List all projects with basic information.
 
@@ -200,7 +212,11 @@ async def list_projects(ctx: Context) -> Dict[str, Any]:
     return await tools.list_projects(ctx)
 
 
-@mcp.tool
+@mcp.tool(
+    annotations={
+        "readOnlyHint": True,
+    },
+)
 async def list_folders(
     ctx: Context,
     project_id: Annotated[
@@ -232,7 +248,11 @@ async def list_folders(
     )
 
 
-@mcp.tool
+@mcp.tool(
+    annotations={
+        "readOnlyHint": True,
+    },
+)
 async def get_folder(
     ctx: Context,
     folder_id: Annotated[int, Field(description="Productive folder ID")],
@@ -244,7 +264,11 @@ async def get_folder(
     return await tools.get_folder(ctx, folder_id)
 
 
-@mcp.tool
+@mcp.tool(
+    annotations={
+        "readOnlyHint": True,
+    },
+)
 async def list_workflow_statuses(
     ctx: Context,
     workflow_id: Annotated[
@@ -270,7 +294,11 @@ async def list_workflow_statuses(
     )
 
 
-@mcp.tool
+@mcp.tool(
+    annotations={
+        "readOnlyHint": True,
+    },
+)
 async def list_time_entries(
     ctx: Context,
     date: Annotated[str, Field(description="Optional date filter (YYYY-MM-DD)")] = None,
@@ -301,7 +329,11 @@ async def list_time_entries(
     )
 
 
-@mcp.tool
+@mcp.tool(
+    annotations={
+        "readOnlyHint": True,
+    },
+)
 async def list_tasks(
     ctx: Context,
     project_id: Annotated[int, Field(description="Filter tasks by project ID")] = None,
@@ -350,7 +382,11 @@ async def list_tasks(
     )
 
 
-@mcp.tool
+@mcp.tool(
+    annotations={
+        "readOnlyHint": True,
+    },
+)
 async def get_task(
     ctx: Context,
     task_id: Annotated[
@@ -700,7 +736,11 @@ async def delete_todo(
     return await tools.delete_todo(ctx=ctx, todo_id=todo_id)
 
 
-@mcp.tool
+@mcp.tool(
+    annotations={
+        "readOnlyHint": True,
+    },
+)
 async def get_task_history(
     ctx: Context,
     task_id: Annotated[
@@ -796,7 +836,11 @@ async def get_task_history(
 #     )
 
 
-@mcp.tool
+@mcp.tool(
+    annotations={
+        "readOnlyHint": True,
+    },
+)
 async def list_comments(
     ctx: Context,
     project_id: Annotated[
@@ -856,7 +900,11 @@ async def list_comments(
 #     return await tools.get_comment(ctx, comment_id)
 
 
-@mcp.tool
+@mcp.tool(
+    annotations={
+        "readOnlyHint": True,
+    },
+)
 async def list_todos(
     ctx: Context,
     task_id: Annotated[
@@ -893,7 +941,11 @@ async def list_todos(
     )
 
 
-@mcp.tool
+@mcp.tool(
+    annotations={
+        "readOnlyHint": True,
+    },
+)
 async def get_todo(
     ctx: Context,
     todo_id: Annotated[int, Field(description="Productive todo ID")],
@@ -911,7 +963,11 @@ async def get_todo(
     return await tools.get_todo(ctx, todo_id)
 
 
-@mcp.tool
+@mcp.tool(
+    annotations={
+        "readOnlyHint": True,
+    },
+)
 async def list_pages(
     ctx: Context,
     project_id: Annotated[
@@ -945,7 +1001,11 @@ async def list_pages(
     )
 
 
-@mcp.tool
+@mcp.tool(
+    annotations={
+        "readOnlyHint": True,
+    },
+)
 async def get_page(
     ctx: Context,
     page_id: Annotated[int, Field(description="The unique Productive page identifier")],
@@ -954,7 +1014,11 @@ async def get_page(
     return await tools.get_page(ctx, page_id)
 
 
-@mcp.tool
+@mcp.tool(
+    annotations={
+        "readOnlyHint": True,
+    },
+)
 async def list_people(
     ctx: Context,
     page_number: Annotated[int, Field(description="Page number for pagination")] = None,
@@ -977,7 +1041,11 @@ async def list_people(
     )
 
 
-@mcp.tool
+@mcp.tool(
+    annotations={
+        "readOnlyHint": True,
+    },
+)
 async def get_person(
     ctx: Context,
     person_id: Annotated[
@@ -996,7 +1064,11 @@ async def get_person(
     return await tools.get_person(ctx, person_id)
 
 
-@mcp.tool
+@mcp.tool(
+    annotations={
+        "readOnlyHint": True,
+    },
+)
 async def list_attachments(
     ctx: Context,
     page_number: Annotated[int, Field(description="Page number for pagination")] = None,
@@ -1023,24 +1095,36 @@ async def list_attachments(
 
 
 if not config.read_only:
-    for _write_tool in [
+    _write_tools_create = [
         create_task,
-        update_task,
-        delete_task,
         create_comment,
-        update_comment,
-        delete_comment,
         create_time_entry,
-        update_time_entry,
-        delete_time_entry,
         create_page,
-        update_page,
-        delete_page,
         create_todo,
+    ]
+    _write_tools_update = [
+        update_task,
+        update_comment,
+        update_time_entry,
+        update_page,
         update_todo,
+    ]
+    _write_tools_delete = [
+        delete_task,
+        delete_comment,
+        delete_time_entry,
+        delete_page,
         delete_todo,
-    ]:
-        mcp.tool(_write_tool)
+    ]
+
+    for _tool in _write_tools_create:
+        mcp.tool(_tool, annotations={"readOnlyHint": False, "destructiveHint": True})
+
+    for _tool in _write_tools_update:
+        mcp.tool(_tool, annotations={"readOnlyHint": False, "destructiveHint": True})
+
+    for _tool in _write_tools_delete:
+        mcp.tool(_tool, annotations={"readOnlyHint": False, "destructiveHint": True})
 
 
 def main() -> None:

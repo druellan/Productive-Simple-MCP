@@ -283,15 +283,15 @@ async def get_task(ctx: Context, task_id: int) -> ToolResult:
 
         filtered = filter_response(result)
 
-        # Ensure time tracking fields are always present at the top level
+        # Ensure time tracking fields are present at the top level (only if key exists, don't mask null as 0)
         if "data" in filtered and "attributes" in filtered["data"]:
             attributes = filtered["data"]["attributes"]
 
-            # Set default values for time tracking fields if missing
+            # Only set defaults if key is completely missing - don't mask API nulls as 0
             time_fields = {"initial_estimate": 0, "worked_time": 0, "billable_time": 0, "remaining_time": 0}
 
             for field, default_value in time_fields.items():
-                if field not in attributes or attributes[field] is None:
+                if field not in attributes:
                     attributes[field] = default_value
 
         return filtered
@@ -798,8 +798,10 @@ async def get_attachment(ctx: Context, attachment_id: int) -> ToolResult:
 
     except ProductiveAPIError as e:
         await _handle_productive_api_error(ctx, e, f"attachment {attachment_id}")
+        raise  # Re-raise after handling
     except Exception as e:
         await ctx.error(f"Unexpected error fetching attachment: {str(e)}")
+        raise e
 
 
 async def list_people(ctx: Context, page_number: int = None, page_size: int = config.items_per_page) -> ToolResult:
@@ -912,23 +914,6 @@ async def quick_search(ctx: Context, query: str, search_types: list[str] = None,
                 "webapp_url": webapp_url,
             }
 
-            # For tasks, hydrate with full task details to expose workflow_status_name (custom status)
-            if record_type == "task" and record_id:
-                try:
-                    task_details = await client.get_task(int(record_id))
-                    filtered_task = filter_response(task_details)
-                    task_data = filtered_task.get("data", {}) if isinstance(filtered_task, dict) else {}
-                    task_attrs = task_data.get("attributes", {}) if isinstance(task_data, dict) else {}
-
-                    workflow_status = task_attrs.get("workflow_status_name")
-                    if workflow_status:
-                        filtered_item["workflow_status_name"] = workflow_status
-
-                    # Prefer canonical webapp URL from filtered task if present
-                    if "webapp_url" in task_data:
-                        filtered_item["webapp_url"] = task_data["webapp_url"]
-                except Exception as task_error:
-                    await ctx.warning(f"Could not fetch workflow status for task {record_id}: {str(task_error)}")
 
             filtered_data.append(filtered_item)
 

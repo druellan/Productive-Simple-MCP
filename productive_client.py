@@ -3,6 +3,8 @@ import asyncio
 from typing import Dict, Any, Optional, Tuple
 from config import config
 
+DEFAULT_LIMITS = httpx.Limits(max_connections=100, max_keepalive_connections=20)
+
 
 class ProductiveAPIError(Exception):
     """Custom exception for Productive API errors"""
@@ -18,7 +20,11 @@ class ProductiveClient:
     """Async HTTP client for Productive API"""
 
     def __init__(self):
-        self.client = httpx.AsyncClient(timeout=config.timeout, headers=config.headers)
+        self.client = httpx.AsyncClient(
+            timeout=config.timeout,
+            headers=config.headers,
+            limits=DEFAULT_LIMITS,
+        )
         self.max_retries = 3
         self.retry_delay = 1.0
 

@@ -1,3 +1,5 @@
+import re
+from datetime import datetime
 from fastmcp import Context
 from fastmcp.tools.tool import ToolResult
 
@@ -5,6 +7,22 @@ from config import config
 from productive_client import client, ProductiveAPIError
 from tools_read import _handle_productive_api_error
 from utils import filter_response
+
+DATE_FORMAT_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+
+def _validate_date(date_str: str, field_name: str) -> None:
+    """Validate date string is YYYY-MM-DD format."""
+    if date_str is None:
+        return
+    if not DATE_FORMAT_PATTERN.match(date_str):
+        try:
+            datetime.strptime(date_str, "%Y-%m-%d")
+        except ValueError:
+            raise ProductiveAPIError(
+                f"{field_name} must be in YYYY-MM-DD format, got: {date_str}",
+                400,
+                "INVALID_DATE_FORMAT",
+            )
 
 
 async def _ensure_writes_enabled(ctx: Context, operation_name: str) -> None:
@@ -32,6 +50,8 @@ async def create_task(
     """Create a new task in Productive with optional relationships."""
     try:
         await _ensure_writes_enabled(ctx, "create_task")
+
+        _validate_date(due_date, "due_date")
 
         normalized_status = status.lower().strip()
         if normalized_status not in ("open", "closed"):
@@ -114,6 +134,8 @@ async def update_task(
     """Update an existing task in Productive. Only provided fields are modified (PATCH)."""
     try:
         await _ensure_writes_enabled(ctx, "update_task")
+
+        _validate_date(due_date, "due_date")
 
         if not any([
             title is not None,
@@ -335,6 +357,8 @@ async def create_time_entry(
     try:
         await _ensure_writes_enabled(ctx, "create_time_entry")
 
+        _validate_date(date, "date")
+
         if task_id is None and service_id is None:
             raise ProductiveAPIError(
                 "Either task_id or service_id must be provided",
@@ -405,6 +429,8 @@ async def update_time_entry(
     """Update an existing time entry in Productive. Only provided fields are modified (PATCH)."""
     try:
         await _ensure_writes_enabled(ctx, "update_time_entry")
+
+        _validate_date(date, "date")
 
         if not any([
             date is not None,
