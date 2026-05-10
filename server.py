@@ -862,6 +862,8 @@ async def list_comments(
 ) -> Dict[str, Any]:
     """List comments with optional filtering by project or task.
 
+    Use this when: You need full comment metadata (text, author, timestamps, attachments, mentions) and want to filter by specific project, task, or discussion thread.
+
     Returns:
     - Comment text, author, and timestamp
     - Parent entity (project or task) with details
@@ -923,6 +925,8 @@ async def list_todos(
 ) -> Dict[str, Any]:
     """List todo checklist items with optional filtering by task.
 
+    Use this when: You need to browse or filter checklist items across tasks (e.g., find all open todos in a project, filter by assignee). Use get_todo when you need full details of a specific todo.
+
     Returns:
     - Checkbox item text and completion status
     - Assignee information
@@ -951,6 +955,8 @@ async def get_todo(
     todo_id: Annotated[int, Field(description="Productive todo ID")],
 ) -> Dict[str, Any]:
     """Get a specific todo checklist item by ID.
+
+    Use this when: You need full details of a specific todo (including project/client context, time estimates, related comments/attachments).
 
     Returns:
     - Checkbox item text and completion status
@@ -983,6 +989,8 @@ async def list_pages(
 ) -> Dict[str, Any]:
     """List pages/documents with optional filtering by project or creator.
 
+    Use this when: You need to browse or search for pages by project, creator, or to retrieve page metadata/titles without full content.
+
     Pages in Productive are documents that can contain rich text content,
     attachments, and are organized within projects.
 
@@ -1010,7 +1018,10 @@ async def get_page(
     ctx: Context,
     page_id: Annotated[int, Field(description="The unique Productive page identifier")],
 ) -> Dict[str, Any]:
-    """Get a specific page/document by ID, including full content body."""
+    """Get a specific page/document by ID, including full content body.
+
+    Use this when: You need the full content body of a specific page (not just metadata or titles).
+    """
     return await tools.get_page(ctx, page_id)
 
 
@@ -1054,6 +1065,8 @@ async def get_person(
 ) -> Dict[str, Any]:
     """Get detailed information about a specific team member by ID.
 
+    Use this when: You need detailed information about a specific person (full name, email, role, title, activity timestamps, custom fields, avatar). Use list_people when you need to browse or search multiple people.
+
     Returns:
     - Full name, email, and contact information
     - Role, title, and organizational details
@@ -1080,6 +1093,8 @@ async def list_attachments(
     ] = None,
 ) -> Dict[str, Any]:
     """List attachment/file metadata with optional filtering.
+
+    Use this when: You need to browse or search attachments (files associated with tasks, comments, expenses). Note: returns metadata only — actual file content is not included.
 
     Attachments are files (PDFs, images, documents) associated with tasks, comments, expenses, etc.
 

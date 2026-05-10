@@ -25,5 +25,5 @@ _logs/*
 .vscode
 .github
 .agents
-.roo
+.opencode/*
 .brv
