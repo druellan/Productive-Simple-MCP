@@ -575,6 +575,11 @@ async def update_page(
     try:
         await _ensure_writes_enabled(ctx, "update_page")
 
+        # MCP clients may serialize an omitted optional string as "". Do not
+        # send that as a title update, because Productive would clear the title.
+        if title is not None and not title.strip():
+            title = None
+
         if not any([
             title is not None,
             content is not None,
