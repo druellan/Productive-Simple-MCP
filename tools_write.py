@@ -587,21 +587,21 @@ async def update_page(
 
         await ctx.info(f"Updating page {page_id}")
 
-        page_payload: dict = {
-            "data": {
-                "type": "pages",
-                "id": str(page_id),
-                "attributes": {},
-            }
-        }
+        result = None
 
-        # Attributes (only include if provided)
         if title is not None:
-            page_payload["data"]["attributes"]["title"] = title
-        if content is not None:
-            page_payload["data"]["attributes"]["content"] = content
+            page_payload = {
+                "data": {
+                    "type": "pages",
+                    "id": str(page_id),
+                    "attributes": {"title": title},
+                }
+            }
+            result = await client.update_page(page_id, data=page_payload)
 
-        result = await client.update_page(page_id, data=page_payload)
+        if content is not None:
+            result = await client.replace_page_body_with_html(page_id, content)
+
         await ctx.info("Successfully updated page")
         filtered = filter_response(result)
         return filtered

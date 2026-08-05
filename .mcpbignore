@@ -1,0 +1,15 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+.agents/
+.brv/
+.github/
+.git/
+.gitignore
+.opencode/
+.vscode/
+uv.lock

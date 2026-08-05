@@ -230,8 +230,16 @@ class ProductiveClient:
         return await self._request("POST", "/pages", data=data)
 
     async def update_page(self, page_id: int, data: Dict[str, Any]) -> Dict[str, Any]:
-        """Update a page/document with Productive JSON:API payload (PATCH)."""
+        """Update page metadata with a Productive JSON:API payload (PATCH)."""
         return await self._request("PATCH", f"/pages/{str(page_id)}", data=data)
+
+    async def replace_page_body_with_html(self, page_id: int, html: str) -> Dict[str, Any]:
+        """Replace a page body using Productive's HTML proxy endpoint."""
+        return await self._request(
+            "PATCH",
+            f"/pages/{str(page_id)}/replace_body_with_html",
+            data={"html": html},
+        )
 
     async def delete_page(self, page_id: int) -> Dict[str, Any]:
         """Delete a page/document by ID (returns 204 No Content)."""

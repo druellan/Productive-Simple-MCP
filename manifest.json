@@ -1,0 +1,102 @@
+{
+  "manifest_version": "0.4",
+  "name": "productive-mcp",
+  "display_name": "Productive.io MCP Server",
+  "version": "0.2.1",
+  "description": "Access Productive.io data: projects, folders, tasks, pages, comments, todos, people, workflow statuses, and time entries.",
+  "long_description": "An MCP server that provides tools to interact with the Productive.io API. Supports searching across projects/tasks/pages/actions, listing and managing tasks, comments, todos, time entries, pages, attachments, folders, workflow statuses, and team members. Includes read-only mode for safety and TOON/JSON output format options.",
+  "author": {
+    "name": "druellan",
+    "email": "dario.ruellan@gmail.com",
+    "url": "https://github.com/druellan"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/druellan/productive-mcp.git"
+  },
+  "homepage": "https://github.com/druellan/productive-mcp",
+  "documentation": "https://github.com/druellan/productive-mcp#readme",
+  "support": "https://github.com/druellan/productive-mcp/issues",
+  "server": {
+    "type": "uv",
+    "entry_point": "server.py",
+    "mcp_config": {
+      "command": "uv",
+      "args": ["run", "--directory", "${__dirname}", "server.py"],
+      "env": {
+        "PRODUCTIVE_API_KEY": "${user_config.api_key}",
+        "PRODUCTIVE_ORGANIZATION": "${user_config.organization}",
+        "PRODUCTIVE_BASE_URL": "${user_config.base_url}",
+        "OUTPUT_FORMAT": "${user_config.output_format}",
+        "READ_ONLY": "${user_config.read_only}"
+      }
+    }
+  },
+  "tools": [
+    { "name": "quick_search", "description": "Search across projects, tasks, pages, and actions" },
+    { "name": "list_recent_activity", "description": "Get summarized feed of recent activities and updates" },
+    { "name": "list_projects", "description": "List all projects" },
+    { "name": "list_folders", "description": "List folders in a project" },
+    { "name": "get_folder", "description": "Get folder details by ID" },
+    { "name": "list_workflow_statuses", "description": "List workflow statuses with optional filters" },
+    { "name": "list_time_entries", "description": "List time entries with optional date/relationship filters" },
+    { "name": "list_tasks", "description": "List tasks with optional filtering and pagination" },
+    { "name": "get_task", "description": "Get detailed task information by ID" },
+    { "name": "get_task_history", "description": "Get comprehensive task history including status changes, assignments, and milestones" },
+    { "name": "list_comments", "description": "List comments with optional filtering by project or task" },
+    { "name": "list_todos", "description": "List todo checklist items with optional filtering" },
+    { "name": "get_todo", "description": "Get specific todo checklist item by ID" },
+    { "name": "list_pages", "description": "List pages/documents with optional filtering" },
+    { "name": "get_page", "description": "Get specific page/document by ID with full content" },
+    { "name": "list_people", "description": "List all team members" },
+    { "name": "get_person", "description": "Get detailed info about a specific team member by ID" },
+    { "name": "list_attachments", "description": "List attachment/file metadata with optional filtering" }
+  ],
+  "tools_generated": true,
+  "keywords": ["productive", "project-management", "time-tracking", "tasks", "api"],
+  "license": "MIT",
+  "privacy_policies": ["https://www.productive.io/privacy-policy"],
+  "user_config": {
+    "api_key": {
+      "type": "string",
+      "title": "API Key",
+      "description": "Your Productive API key (from Productive Settings > API Access)",
+      "sensitive": true,
+      "required": true
+    },
+    "organization": {
+      "type": "string",
+      "title": "Organization ID",
+      "description": "Your Productive organization ID (found in the browser URL when logged in)",
+      "required": true
+    },
+    "base_url": {
+      "type": "string",
+      "title": "API Base URL",
+      "description": "Productive API base URL",
+      "default": "https://api.productive.io/api/v2",
+      "required": false
+    },
+    "output_format": {
+      "type": "string",
+      "title": "Output Format",
+      "description": "Output format for tool results: 'toon' (compact, LLM-optimized) or 'json' (standard)",
+      "default": "toon",
+      "required": false
+    },
+    "read_only": {
+      "type": "boolean",
+      "title": "Read-Only Mode",
+      "description": "When enabled, write operations (create/update/delete) are blocked",
+      "default": true,
+      "required": false
+    }
+  },
+  "compatibility": {
+    "claude_desktop": ">=0.10.0",
+    "platforms": ["darwin", "win32", "linux"],
+    "runtimes": {
+      "python": ">=3.10"
+    }
+  }
+}
