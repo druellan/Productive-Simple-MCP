@@ -8,6 +8,8 @@ __pycache__/
 env/
 venv/
 productive_mcp.egg-info
+build/
+dist/
 # Environment & secrets
 .env
 *.env

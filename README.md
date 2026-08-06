@@ -5,7 +5,7 @@
 
 A Model Context Protocol (MCP) server for integrating Productive.io into AI workflows. This server allows AI assistants and tools to access projects, folders, workflow statuses, time entries, tasks, comments, pages, attachments, todos, and people. Built with [FastMCP](https://gofastmcp.com/).
 
-This implementation is optimized for read-focused operations, with optional guarded write capabilities (for example, task creation) and LLM-friendly output options (JSON and TOON). It is optimized for efficiency and simplicity, exposing only the necessary information. For a more comprehensive solution, consider BerwickGeek's implementation: [Productive MCP by BerwickGeek](https://github.com/berwickgeek/productive-mcp).
+This implementation is optimized for read-focused operations, with optional guarded write capabilities (for example, task creation) and LLM-friendly output options (Hybrid, JSON, and TOON). It is optimized for efficiency and simplicity, exposing only the necessary information. For a more comprehensive solution, consider BerwickGeek's implementation: [Productive MCP by BerwickGeek](https://github.com/berwickgeek/productive-mcp).
 
 ## Features
 
@@ -75,7 +75,7 @@ The server uses environment variables for configuration:
 - `PRODUCTIVE_ORGANIZATION`: Your Productive organization ID (required)
 - `PRODUCTIVE_BASE_URL`: Base URL for Productive API (default: https://api.productive.io/api/v2)
 - `PRODUCTIVE_TIMEOUT`: Request timeout in seconds (default: 30)
-- `OUTPUT_FORMAT`: Output format for tool responses ("toon" or "json", default: "toon")
+- `OUTPUT_FORMAT`: Output format for tool responses (`"hybrid"`, `"toon"`, or `"json"`, default: `"hybrid"`)
 - `READ_ONLY`: Global write-protection toggle for write tools — create_task, update_task, delete_task, create_comment, update_comment, delete_comment, create_time_entry, update_time_entry, delete_time_entry, create_page, update_page, delete_page, create_todo, update_todo, delete_todo ("true" or "false", default: "true")
 
 ## Usage
@@ -517,10 +517,15 @@ the todo item will be removed from the task. When `READ_ONLY=true`, this tool is
 
 ## Output Format
 
-All tools return filtered data optimized for LLM processing. The output format can be configured via the `OUTPUT_FORMAT` environment variable:
+The server supports three output formats configured via the `OUTPUT_FORMAT` environment variable:
 
-- **TOON** (default): Token-Optimized Object Notation reduces token consumption by 30-60% compared to JSON, ideal for LLM interactions
-- **JSON**: Standard JSON format for compatibility with existing tools and workflows
+| Mode | `content` (text) | `structured_content` | Description |
+|-|-|-|-|
+| **`hybrid`** (default) | TOON | JSON dict | Both TOON for token efficiency and structured data for programmatic access |
+| **`toon`** | TOON | `{ "toon": toonText }` | Pure TOON (Token-Optimized Object Notation) with no dual-format overhead |
+| **`json`** | JSON string | JSON dict | Standard FastMCP JSON output |
+
+TOON (Token-Optimized Object Notation) reduces token consumption by 30-60% compared to JSON. The **hybrid** mode is the recommended default: it exposes the TOON rendering as the message text while preserving the full JSON dict as structured output, so agents that rely on structured data can still parse it programmatically.
 
 All tools return filtered data optimized for LLM processing:
 

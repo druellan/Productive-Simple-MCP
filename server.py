@@ -36,6 +36,8 @@ class OutputSerializationMiddleware(Middleware):
     """Serialize tool output based on OUTPUT_FORMAT configuration.
 
     Intercepts tool results and serializes them to TOON or JSON format.
+    In hybrid mode, TOON text is sent as content while the original JSON
+    is preserved as structured_content for programmatic access.
     """
 
     async def on_call_tool(self, context: MiddlewareContext, call_next):
@@ -48,9 +50,11 @@ class OutputSerializationMiddleware(Middleware):
                     if text and isinstance(text, str):
                         try:
                             parsed = json.loads(text)
-                            if config.output_format == "toon":
+                            if config.output_format in ("toon", "hybrid"):
                                 try:
                                     item.text = toon_encode(parsed)
+                                    if config.output_format == "toon":
+                                        result.structured_content = {"toon": item.text}
                                 except Exception:
                                     pass
                         except (json.JSONDecodeError, TypeError, ValueError):
@@ -68,7 +72,7 @@ mcp = FastMCP(
         "Use get_people to list team members and get_person for individual details."
         "All endpoints paginate (max 200 items). Use filters when possible to reduce scope."
     ),
-    version="0.2.2",
+    version="0.2.3",
     lifespan=lifespan,
     on_duplicate="warn",
 )

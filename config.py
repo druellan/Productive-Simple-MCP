@@ -22,7 +22,7 @@ class Config:
         else:
             self.organization = None
         self.items_per_page = int(os.getenv("PRODUCTIVE_ITEMS_PER_PAGE", "50"))
-        self.output_format = os.getenv("OUTPUT_FORMAT", "toon")
+        self.output_format = os.getenv("OUTPUT_FORMAT", "hybrid")
         self.read_only = self._parse_bool_env("READ_ONLY", default=True)
 
     @staticmethod
@@ -68,8 +68,8 @@ class Config:
         if self.items_per_page <= 0 or self.items_per_page > 200:
             errors.append("PRODUCTIVE_ITEMS_PER_PAGE must be between 1 and 200")
 
-        if self.output_format not in ["toon", "json"]:
-            errors.append("OUTPUT_FORMAT must be either 'toon' or 'json'")
+        if self.output_format not in ("toon", "json", "hybrid"):
+            errors.append("OUTPUT_FORMAT must be 'toon', 'json', or 'hybrid'")
 
         if not isinstance(self.read_only, bool):
             errors.append("READ_ONLY must be either 'true' or 'false'")
