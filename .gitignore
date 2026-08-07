@@ -25,7 +25,8 @@ drive_files.db
 _logs/*
 # Editor
 .vscode
-.github
+.github/*
+!.github/workflows/
 .agents
 .opencode/*
 .brv
