@@ -6,7 +6,8 @@
       "bump-minor-pre-major": true,
       "bump-patch-for-minor-pre-major": true,
       "pull-request-header": "New release",
-      "pull-request-footer": ""
+      "pull-request-footer": "",
+      "extra-files": ["manifest.json"]
     }
   }
 }

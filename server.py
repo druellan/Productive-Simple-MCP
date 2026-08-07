@@ -72,7 +72,6 @@ mcp = FastMCP(
         "Use get_people to list team members and get_person for individual details."
         "All endpoints paginate (max 200 items). Use filters when possible to reduce scope."
     ),
-    version="0.2.3",
     lifespan=lifespan,
     on_duplicate="warn",
 )
