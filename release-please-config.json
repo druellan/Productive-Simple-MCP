@@ -4,7 +4,10 @@
       "release-type": "python",
       "changelog-path": "CHANGELOG.md",
       "bump-minor-pre-major": true,
-      "bump-patch-for-minor-pre-major": true
+      "bump-patch-for-minor-pre-major": true,
+      "pull-request-title-pattern": "Release v${version}",
+      "pull-request-header": "New release",
+      "pull-request-footer": ""
     }
   }
 }
