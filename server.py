@@ -990,19 +990,28 @@ async def list_pages(
     page_size: Annotated[
         int, Field(description="Optional number of pages per page (max 200)")
     ] = None,
+    extra_filters: Annotated[
+        dict,
+        Field(
+            description="Additional Productive query filters using API syntax. Use filter[parent_page_id][eq] to list direct subpages/subfolders of a folder page. Use filter[root_page_id][eq] to list ALL pages nested under a root doc. Other supported filters: filter[status], filter[id][eq], filter[full_query]."
+        ),
+    ] = None,
 ) -> Dict[str, Any]:
-    """List pages/documents with optional filtering by project or creator.
+    """List pages/documents with optional filtering by project, creator, or parent hierarchy.
 
     Use this when: You need to browse or search for pages by project, creator, or to retrieve page metadata/titles without full content.
+    Also use this to discover subpages/subfolders inside a folder page or root doc.
 
     Pages in Productive are documents that can contain rich text content,
-    attachments, and are organized within projects.
+    attachments, and are organized within projects and nested inside parent pages.
 
     Returns page titles, content, metadata, and project relationships.
 
     Examples:
         list_pages(project_id=1234)  # All pages in a project
         list_pages(creator_id=567)   # Pages created by a specific person
+        list_pages(extra_filters={'filter[parent_page_id][eq]': 179857})  # Direct subpages of a folder page
+        list_pages(extra_filters={'filter[root_page_id][eq]': 179857})  # All pages in a doc tree
     """
     return await tools.list_pages(
         ctx,
@@ -1010,6 +1019,7 @@ async def list_pages(
         creator_id=creator_id,
         page_number=page_number,
         page_size=page_size,
+        extra_filters=extra_filters,
     )
 
 

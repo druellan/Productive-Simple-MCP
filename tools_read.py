@@ -696,15 +696,18 @@ def _summarize_activities(activities: list) -> dict:
     return summary
 
 
-async def list_pages(ctx: Context, project_id: int = None, creator_id: int = None, page_number: int = None, page_size: int = config.items_per_page) -> ToolResult:
+async def list_pages(ctx: Context, project_id: int = None, creator_id: int = None, page_number: int = None, page_size: int = config.items_per_page, extra_filters: dict = None) -> ToolResult:
     """List pages (docs) with optional filters and pagination.
 
     Developer notes:
-    - Supports project_id and creator_id filters.
+    - Supports project_id, creator_id, and arbitrary extra_filters.
+    - key use: filter[parent_page_id][eq]=<id> for direct subpages of a folder page.
+    - key use: filter[root_page_id][eq]=<id> for all pages nested under a root doc.
     - Enforces configurable default page[size] if not provided.
     - Sorts by most recent updates first.
     - Applies utils.filter_response to sanitize (body excluded via type='pages').
     - Uses consistent scalar filters: filter[project_id][eq], filter[creator_id][eq]
+    - extra_filters are merged directly into query params (e.g. filter[parent_page_id][eq]=179857).
     """
     try:
         await ctx.info("Fetching pages")
@@ -716,6 +719,8 @@ async def list_pages(ctx: Context, project_id: int = None, creator_id: int = Non
             params["filter[project_id][eq]"] = project_id
         if creator_id is not None:
             params["filter[creator_id][eq]"] = creator_id
+        if extra_filters:
+            params.update(extra_filters)
         params["sort"] = "-updated_at"
         result = await client.get_pages(params=params if params else None)
         await ctx.info("Successfully retrieved pages")
