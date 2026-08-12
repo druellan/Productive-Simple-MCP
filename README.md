@@ -461,7 +461,7 @@ When `READ_ONLY=true`, this tool is blocked globally.
 
 - `title` (str, required): Page title
 - `project_id` (int, required): Productive project ID where the page will be created
-- `content` (str, optional): Page content (HTML supported)
+- `content` (str, optional): Page content as HTML markup (e.g. `<h1>Title</h1><p>Body text</p>`)
 
 ### `update_page`
 
@@ -472,7 +472,7 @@ At least one field must be given. When `READ_ONLY=true`, this tool is blocked gl
 
 - `page_id` (int, required): Productive page ID to update
 - `title` (str, optional): New page title
-- `content` (str, optional): New page content (HTML supported)
+- `content` (str, optional): New page content as HTML markup (e.g. `<h1>Title</h1><p>Body text</p>`)
 
 ### `delete_page`
 

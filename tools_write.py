@@ -6,7 +6,7 @@ from fastmcp.tools.tool import ToolResult
 from config import config
 from productive_client import client, ProductiveAPIError
 from tools_read import _handle_productive_api_error
-from utils import filter_response
+from utils import filter_response, coerce_page_content_to_html
 
 DATE_FORMAT_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 
@@ -549,11 +549,15 @@ async def create_page(
             }
         }
 
-        if content is not None:
-            page_payload["data"]["attributes"]["content"] = content
-
         result = await client.create_page(data=page_payload)
         await ctx.info("Successfully created page")
+
+        if content is not None:
+            new_page_id = (result.get("data") or {}).get("id")
+            if new_page_id is not None:
+                html = coerce_page_content_to_html(content)
+                result = await client.replace_page_body_with_html(int(new_page_id), html)
+                await ctx.info("Successfully set page content")
 
         filtered = filter_response(result)
         return filtered
@@ -605,7 +609,8 @@ async def update_page(
             result = await client.update_page(page_id, data=page_payload)
 
         if content is not None:
-            result = await client.replace_page_body_with_html(page_id, content)
+            html = coerce_page_content_to_html(content)
+            result = await client.replace_page_body_with_html(page_id, html)
 
         await ctx.info("Successfully updated page")
         filtered = filter_response(result)

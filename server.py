@@ -629,11 +629,12 @@ async def create_page(
     ctx: Context,
     title: Annotated[str, Field(description="Page title")],
     project_id: Annotated[int, Field(description="Productive project ID where the page will be created")],
-    content: Annotated[str, Field(description="Optional page content (supports HTML)")] = None,
+    content: Annotated[str, Field(description="Optional page content as HTML markup (e.g. '<h1>Title</h1><p>Body text</p>')")] = None,
 ) -> Dict[str, Any]:
     """Create a new page/document in a Productive project.
 
     Pages are documents that can contain rich text content and are organized within projects.
+    The content field expects HTML markup.
 
     Examples:
         create_page(title="Meeting Notes", project_id=12345)
@@ -651,11 +652,12 @@ async def update_page(
     ctx: Context,
     page_id: Annotated[int, Field(description="Productive page ID to update")],
     title: Annotated[str, Field(description="New page title")] = None,
-    content: Annotated[str, Field(description="New page content (HTML supported)")] = None,
+    content: Annotated[str, Field(description="New page content as HTML markup (e.g. '<h1>Title</h1><p>Body text</p>')")] = None,
 ) -> Dict[str, Any]:
     """Update an existing page/document in Productive.
 
     Only provided fields are modified (partial PATCH). At least one field must be given.
+    The content field expects HTML markup.
 
     Examples:
         update_page(page_id=67890, title="Updated Meeting Notes")
