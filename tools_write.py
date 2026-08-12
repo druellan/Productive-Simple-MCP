@@ -232,9 +232,7 @@ async def delete_task(
         await client.delete_task(task_id)
         await ctx.info("Successfully deleted task")
 
-        return ToolResult(
-            f"Task {task_id} has been successfully deleted."
-        )
+        return {"success": True, "message": f"Task {task_id} has been successfully deleted."}
 
     except ProductiveAPIError as e:
         await _handle_productive_api_error(ctx, e, "task deletion")
@@ -336,7 +334,7 @@ async def delete_comment(
         await ctx.info(f"Deleting comment {comment_id}")
         await client.delete_comment(comment_id)
         await ctx.info("Successfully deleted comment")
-        return ToolResult(f"Comment {comment_id} has been successfully deleted.")
+        return {"success": True, "message": f"Comment {comment_id} has been successfully deleted."}
     except ProductiveAPIError as e:
         await _handle_productive_api_error(ctx, e, "comment deletion")
     except Exception as e:
@@ -509,9 +507,7 @@ async def delete_time_entry(
         await client.delete_time_entry(time_entry_id)
         await ctx.info("Successfully deleted time entry")
 
-        return ToolResult(
-            f"Time entry {time_entry_id} has been successfully deleted."
-        )
+        return {"success": True, "message": f"Time entry {time_entry_id} has been successfully deleted."}
 
     except ProductiveAPIError as e:
         await _handle_productive_api_error(ctx, e, "time entry deletion")
@@ -635,9 +631,7 @@ async def delete_page(
         await client.delete_page(page_id)
         await ctx.info("Successfully deleted page")
 
-        return ToolResult(
-            f"Page {page_id} has been successfully deleted."
-        )
+        return {"success": True, "message": f"Page {page_id} has been successfully deleted."}
 
     except ProductiveAPIError as e:
         await _handle_productive_api_error(ctx, e, "page deletion")
@@ -747,9 +741,7 @@ async def delete_todo(
         await client.delete_todo(todo_id)
         await ctx.info("Successfully deleted todo")
 
-        return ToolResult(
-            f"Todo {todo_id} has been successfully deleted."
-        )
+        return {"success": True, "message": f"Todo {todo_id} has been successfully deleted."}
 
     except ProductiveAPIError as e:
         await _handle_productive_api_error(ctx, e, "todo deletion")
