@@ -2,7 +2,7 @@
   "manifest_version": "0.4",
   "name": "productive-mcp",
   "display_name": "Productive.io MCP Server",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "description": "Access Productive.io data: projects, folders, tasks, pages, comments, todos, people, workflow statuses, and time entries.",
   "long_description": "An MCP server that provides tools to interact with the Productive.io API. Supports searching across projects/tasks/pages/actions, listing and managing tasks, comments, todos, time entries, pages, attachments, folders, workflow statuses, and team members. Includes read-only mode for safety and Hybrid/TOON/JSON output format options.",
   "author": {

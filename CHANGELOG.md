@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.5](https://github.com/druellan/Productive-Simple-MCP/compare/v0.2.4...v0.2.5) (2026-08-14)
+
+
+### Features
+
+* add page content append tool ([c4c2adc](https://github.com/druellan/Productive-Simple-MCP/commit/c4c2adc19835c518597dde92c5990ef23088c4b9))
+
 ## [0.2.4](https://github.com/druellan/Productive-Simple-MCP/compare/v0.2.3...v0.2.4) (2026-08-12)
 
 
