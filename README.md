@@ -76,7 +76,7 @@ The server uses environment variables for configuration:
 - `PRODUCTIVE_BASE_URL`: Base URL for Productive API (default: https://api.productive.io/api/v2)
 - `PRODUCTIVE_TIMEOUT`: Request timeout in seconds (default: 30)
 - `OUTPUT_FORMAT`: Output format for tool responses (`"hybrid"`, `"toon"`, or `"json"`, default: `"hybrid"`)
-- `READ_ONLY`: Global write-protection toggle for write tools — create_task, update_task, delete_task, create_comment, update_comment, delete_comment, create_time_entry, update_time_entry, delete_time_entry, create_page, update_page, delete_page, create_todo, update_todo, delete_todo ("true" or "false", default: "true")
+- `READ_ONLY`: Global write-protection toggle for write tools — create_task, update_task, delete_task, create_comment, update_comment, delete_comment, create_time_entry, update_time_entry, delete_time_entry, create_page, update_page, append_page_content, delete_page, create_todo, update_todo, delete_todo ("true" or "false", default: "true")
 
 ## Usage
 
@@ -482,6 +482,17 @@ the page and all its content will be removed. When `READ_ONLY=true`, this tool i
 **Properties:**
 
 - `page_id` (int, required): Productive page ID to delete
+
+### `append_page_content`
+
+Append content to the end of an existing page/document in Productive without fetching its current body. Exactly one of `markdown` or `html` must be provided.
+When `READ_ONLY=true`, this tool is blocked globally.
+
+**Properties:**
+
+- `page_id` (int, required): Productive page ID to append content to
+- `markdown` (str, optional): Markdown content to append (e.g. `# New section\n\n- item one`)
+- `html` (str, optional): HTML content to append (e.g. `<h2>New section</h2><p>Body text</p>`)
 
 ### `create_todo`
 

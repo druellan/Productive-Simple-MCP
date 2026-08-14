@@ -241,6 +241,22 @@ class ProductiveClient:
             data={"html": html},
         )
 
+    async def append_page_html(self, page_id: int, html: str) -> Dict[str, Any]:
+        """Append HTML to the end of a page body using Productive's HTML proxy endpoint."""
+        return await self._request(
+            "PATCH",
+            f"/pages/{str(page_id)}/append_html",
+            data={"html": html},
+        )
+
+    async def append_page_markdown(self, page_id: int, markdown: str) -> Dict[str, Any]:
+        """Append markdown to the end of a page body using Productive's markdown proxy endpoint."""
+        return await self._request(
+            "PATCH",
+            f"/pages/{str(page_id)}/append_markdown",
+            data={"markdown": markdown},
+        )
+
     async def delete_page(self, page_id: int) -> Dict[str, Any]:
         """Delete a page/document by ID (returns 204 No Content)."""
         return await self._request("DELETE", f"/pages/{str(page_id)}")

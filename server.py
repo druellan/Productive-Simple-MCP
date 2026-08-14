@@ -671,6 +671,28 @@ async def update_page(
     )
 
 
+async def append_page_content(
+    ctx: Context,
+    page_id: Annotated[int, Field(description="Productive page ID to append content to")],
+    markdown: Annotated[str, Field(description="Markdown content to append to the end of the page body (e.g. '# Section\\n\\n- item one')")] = None,
+    html: Annotated[str, Field(description="HTML content to append to the end of the page body (e.g. '<h2>Section</h2><p>Body text</p>')")] = None,
+) -> Dict[str, Any]:
+    """Append content to the end of an existing page/document in Productive.
+
+    Appends to the end of the page body without requiring the current content. Exactly one of markdown or html must be provided.
+
+    Examples:
+        append_page_content(page_id=67890, markdown="# New section\\n\\n- item one")
+        append_page_content(page_id=67890, html="<h2>New section</h2><p>Body text</p>")
+    """
+    return await tools.append_page_content(
+        ctx=ctx,
+        page_id=page_id,
+        markdown=markdown,
+        html=html,
+    )
+
+
 async def delete_page(
     ctx: Context,
     page_id: Annotated[int, Field(description="Productive page ID to delete")],
@@ -1137,6 +1159,7 @@ if not config.read_only:
         update_comment,
         update_time_entry,
         update_page,
+        append_page_content,
         update_todo,
     ]
     _write_tools_delete = [

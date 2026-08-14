@@ -619,6 +619,49 @@ async def update_page(
         raise e
 
 
+async def append_page_content(
+    ctx: Context,
+    page_id: int,
+    markdown: str = None,
+    html: str = None,
+) -> ToolResult:
+    """Append content to the end of an existing page/document in Productive.
+
+    Does not require the current page body, so it avoids the full read-modify-
+    write round trip. Exactly one of markdown or html must be provided.
+    """
+    try:
+        await _ensure_writes_enabled(ctx, "append_page_content")
+
+        if (markdown is None) == (html is None):
+            raise ProductiveAPIError(
+                "Exactly one of 'markdown' or 'html' must be provided",
+                400,
+                "INVALID_PARAMS",
+            )
+
+        await ctx.info(f"Appending content to page {page_id}")
+
+        if markdown is not None:
+            if not markdown.strip():
+                raise ProductiveAPIError("markdown must not be empty", 400, "INVALID_PARAMS")
+            result = await client.append_page_markdown(page_id, markdown)
+        else:
+            if not html.strip():
+                raise ProductiveAPIError("html must not be empty", 400, "INVALID_PARAMS")
+            result = await client.append_page_html(page_id, html)
+
+        await ctx.info("Successfully appended content to page")
+        filtered = filter_response(result)
+        return filtered
+
+    except ProductiveAPIError as e:
+        await _handle_productive_api_error(ctx, e, "page append")
+    except Exception as e:
+        await ctx.error(f"Unexpected error appending content: {str(e)}")
+        raise e
+
+
 async def delete_page(
     ctx: Context,
     page_id: int,
