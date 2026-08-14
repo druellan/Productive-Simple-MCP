@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.6](https://github.com/druellan/Productive-Simple-MCP/compare/v0.2.5...v0.2.6) (2026-08-14)
+
+
+### Bug Fixes
+
+* fall back to defaults when config env vars are blank ([8042f5a](https://github.com/druellan/Productive-Simple-MCP/commit/8042f5ac3c5c11249112c47c981ad4f47fee6664))
+
 ## [0.2.5](https://github.com/druellan/Productive-Simple-MCP/compare/v0.2.4...v0.2.5) (2026-08-14)
 
 
