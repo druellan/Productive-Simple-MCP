@@ -7,7 +7,14 @@
       "bump-patch-for-minor-pre-major": true,
       "pull-request-header": "New release",
       "pull-request-footer": "",
-      "extra-files": ["manifest.json"]
+      "extra-files": [
+        "manifest.json",
+        {
+          "type": "toml",
+          "path": "uv.lock",
+          "jsonpath": "$.package[?(@.name.value=='productive-mcp')].version"
+        }
+      ]
     }
   }
 }
