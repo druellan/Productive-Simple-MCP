@@ -1,6 +1,6 @@
 {
   "manifest_version": "0.4",
-  "name": "productive-mcp",
+  "name": "productive-simple-mcp",
   "display_name": "Productive.io MCP Server",
   "version": "0.2.6",
   "description": "Access Productive.io data: projects, folders, tasks, pages, comments, todos, people, workflow statuses, and time entries.",
@@ -12,11 +12,11 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/druellan/productive-mcp.git"
+    "url": "https://github.com/druellan/productive-simple-mcp.git"
   },
-  "homepage": "https://github.com/druellan/productive-mcp",
-  "documentation": "https://github.com/druellan/productive-mcp#readme",
-  "support": "https://github.com/druellan/productive-mcp/issues",
+  "homepage": "https://github.com/druellan/productive-simple-mcp",
+  "documentation": "https://github.com/druellan/productive-simple-mcp#readme",
+  "support": "https://github.com/druellan/productive-simple-mcp/issues",
   "server": {
     "type": "uv",
     "entry_point": "server.py",
@@ -109,6 +109,70 @@
     {
       "name": "list_attachments",
       "description": "List attachment/file metadata with optional filtering"
+    },
+    {
+      "name": "create_task",
+      "description": "Create a new task in a Productive project"
+    },
+    {
+      "name": "update_task",
+      "description": "Update an existing task (title, description, assignee, due date, status, board, task list)"
+    },
+    {
+      "name": "delete_task",
+      "description": "Permanently delete a task and its associated data"
+    },
+    {
+      "name": "create_comment",
+      "description": "Create a new comment on a task or project"
+    },
+    {
+      "name": "update_comment",
+      "description": "Update the body of an existing comment"
+    },
+    {
+      "name": "delete_comment",
+      "description": "Permanently delete a comment"
+    },
+    {
+      "name": "create_time_entry",
+      "description": "Create a new time entry for time tracking"
+    },
+    {
+      "name": "update_time_entry",
+      "description": "Update an existing time entry"
+    },
+    {
+      "name": "delete_time_entry",
+      "description": "Permanently delete a time entry"
+    },
+    {
+      "name": "create_page",
+      "description": "Create a new page/document in a Productive project"
+    },
+    {
+      "name": "update_page",
+      "description": "Update an existing page title or content"
+    },
+    {
+      "name": "append_page_content",
+      "description": "Append content to the end of an existing page"
+    },
+    {
+      "name": "delete_page",
+      "description": "Permanently delete a page/document"
+    },
+    {
+      "name": "create_todo",
+      "description": "Create a new todo checklist item for a task"
+    },
+    {
+      "name": "update_todo",
+      "description": "Update a todo item (content or completion status)"
+    },
+    {
+      "name": "delete_todo",
+      "description": "Permanently delete a todo checklist item"
     }
   ],
   "tools_generated": true,
