@@ -1,6 +1,6 @@
 {
   "manifest_version": "0.4",
-  "name": "productive-simple-mcp",
+  "name": "productive-mcp",
   "display_name": "Productive.io MCP Server",
   "version": "0.2.6",
   "description": "Access Productive.io data: projects, folders, tasks, pages, comments, todos, people, workflow statuses, and time entries.",

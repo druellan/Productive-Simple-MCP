@@ -41,9 +41,9 @@ dev = [
 productive-mcp = "server:main"
 
 [project.urls]
-Homepage = "https://github.com/druellan/productive-mcp"
-Repository = "https://github.com/druellan/productive-mcp"
-Documentation = "https://github.com/druellan/productive-mcp#readme"
+Homepage = "https://github.com/druellan/productive-simple-mcp"
+Repository = "https://github.com/druellan/productive-simple-mcp"
+Documentation = "https://github.com/druellan/productive-simple-mcp#readme"
 
 [tool.setuptools]
 py-modules = ["server", "config", "productive_client", "tools", "tools_read", "tools_write", "utils"]
