@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.7](https://github.com/druellan/Productive-Simple-MCP/compare/v0.2.6...v0.2.7) (2026-08-14)
+
+
+### Documentation
+
+* list all write tools in manifest.json ([6d278c1](https://github.com/druellan/Productive-Simple-MCP/commit/6d278c10ea67baecd80906fca7b565c9aca73fa9))
+
 ## [0.2.6](https://github.com/druellan/Productive-Simple-MCP/compare/v0.2.5...v0.2.6) (2026-08-14)
 
 
