@@ -10,8 +10,8 @@ class Config:
         self.api_key = os.getenv(
             "PRODUCTIVE_API_KEY", ""
         )
-        self.base_url = os.getenv("PRODUCTIVE_BASE_URL", "https://api.productive.io/api/v2")
-        self.timeout = int(os.getenv("PRODUCTIVE_TIMEOUT", "30"))
+        self.base_url = self._get_env("PRODUCTIVE_BASE_URL", "https://api.productive.io/api/v2")
+        self.timeout = int(self._get_env("PRODUCTIVE_TIMEOUT", "30"))
         org_value = os.getenv("PRODUCTIVE_ORGANIZATION")
         if org_value:
             try:
@@ -21,15 +21,21 @@ class Config:
                 self.organization = None
         else:
             self.organization = None
-        self.items_per_page = int(os.getenv("PRODUCTIVE_ITEMS_PER_PAGE", "50"))
-        self.output_format = os.getenv("OUTPUT_FORMAT", "hybrid")
+        self.items_per_page = int(self._get_env("PRODUCTIVE_ITEMS_PER_PAGE", "50"))
+        self.output_format = self._get_env("OUTPUT_FORMAT", "hybrid").lower()
         self.read_only = self._parse_bool_env("READ_ONLY", default=True)
+
+    @staticmethod
+    def _get_env(name: str, default: str) -> str:
+        """Get env var, falling back to default when unset or blank."""
+        raw = os.getenv(name)
+        return default if raw is None or not raw.strip() else raw.strip()
 
     @staticmethod
     def _parse_bool_env(env_name: str, default: bool) -> bool:
         """Parse boolean environment variables using explicit true/false values."""
         raw_value = os.getenv(env_name)
-        if raw_value is None:
+        if raw_value is None or not raw_value.strip():
             return default
 
         normalized = raw_value.strip().lower()
