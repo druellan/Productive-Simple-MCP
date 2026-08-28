@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.2.8](https://github.com/druellan/Productive-Simple-MCP/compare/v0.2.7...v0.2.8) (2026-08-28)
+
+
+### Features
+
+* enhance get_task_history to include total_todos in activity summary ([c03754a](https://github.com/druellan/Productive-Simple-MCP/commit/c03754aad45e9c4ee0af2ef021da54df7ec306c7))
+* enrich get_task with comments, todos, and attachments ([f745aaf](https://github.com/druellan/Productive-Simple-MCP/commit/f745aaf4c1ff0d9a79d23e42c09a9fbafdbb2798))
+* update get_page to return body as readable HTML and enhance documentation ([fcc924a](https://github.com/druellan/Productive-Simple-MCP/commit/fcc924ab4759a4f09377d463cbbcd58f389dfa4d))
+
 ## [0.2.7](https://github.com/druellan/Productive-Simple-MCP/compare/v0.2.6...v0.2.7) (2026-08-14)
 
 
