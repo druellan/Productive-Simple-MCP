@@ -9,45 +9,10 @@ This implementation is optimized for read-focused operations, with optional guar
 
 ## Features
 
-### Read Tools
-- **List Projects**: Retrieve all projects with basic information
-- **List Folders**: Retrieve folders within a project
-- **Get Folder**: Retrieve a specific folder by ID
-- **List Workflow Statuses**: Retrieve workflow statuses with optional filters
-- **List Time Entries**: Retrieve time entries with optional date and relationship filters
-- **List Tasks**: Retrieve tasks with filtering and pagination
-- **Get Task**: Retrieve a specific task by internal ID
-- **Get Task History**: Retrieve task status changes, assignments, milestones, and activity summaries
-- **List Comments**: Retrieve comments with filtering
-- **List Pages**: Retrieve pages/documents with filtering
-- **Get Page**: Retrieve a specific page/document by ID
-- **List Attachments**: Retrieve attachments/files with filtering
-- **List Todos**: Retrieve todo checklist items with filtering
-- **Get Todo**: Retrieve a specific todo by ID
-- **List People**: Retrieve people/team members with pagination
-- **Get Person**: Retrieve a specific person by ID
-- **List Recent Activity**: Summarized activity feed for status updates
-- **Quick Search**: Fast, comprehensive search across projects, tasks, pages, and actions
-
-### Write Tools (blocked when READ_ONLY=true)
-- **Create Task**: Create a new task in a project
-- **Update Task**: Update task fields — title, description, assignee, due date, status, board, task list
-- **Delete Task**: Permanently delete a task by ID (irreversible)
-- **Create Comment**: Create a new comment on a task or project
-- **Update Comment**: Update a comment body
-- **Delete Comment**: Permanently delete a comment by ID (irreversible)
-- **Create Time Entry**: Log time spent on tasks or services
-- **Update Time Entry**: Modify existing time entries
-- **Delete Time Entry**: Remove time entries (irreversible)
-- **Create Page**: Create new documents/pages in projects
-- **Update Page**: Edit page content and titles
-- **Delete Page**: Remove pages/documents (irreversible)
-- **Create Todo**: Add checklist items to tasks
-- **Update Todo**: Modify todo items and completion status
-- **Delete Todo**: Remove todo items (irreversible)
-
-### Additional Features
-- **LLM-Optimized Responses**: Filtered output removes noise, strips HTML, and reduces token consumption
+- **Read tools** for projects, folders, workflow statuses, time entries, tasks, comments, pages, attachments, todos, people, recent activity, and quick search
+- **Write tools** (blocked when `READ_ONLY=true`): create/update/delete for tasks, comments, time entries, pages, and todos, plus page content append
+- **LLM-optimized responses**: noise removed, HTML stripped, `webapp_url` included for direct access
+- **Output formats**: `hybrid` (default), `toon`, and `json`
 
 ## Requirements
 
@@ -75,6 +40,7 @@ The server uses environment variables for configuration:
 - `PRODUCTIVE_ORGANIZATION`: Your Productive organization ID (required)
 - `PRODUCTIVE_BASE_URL`: Base URL for Productive API (default: https://api.productive.io/api/v2)
 - `PRODUCTIVE_TIMEOUT`: Request timeout in seconds (default: 30)
+- `PRODUCTIVE_ITEMS_PER_PAGE`: Default page size for list tools (default: 50, max: 200)
 - `OUTPUT_FORMAT`: Output format for tool responses (`"hybrid"`, `"toon"`, or `"json"`, default: `"hybrid"`)
 - `READ_ONLY`: Global write-protection toggle for write tools — create_task, update_task, delete_task, create_comment, update_comment, delete_comment, create_time_entry, update_time_entry, delete_time_entry, create_page, update_page, append_page_content, delete_page, create_todo, update_todo, delete_todo ("true" or "false", default: "true")
 
@@ -92,23 +58,6 @@ The server uses environment variables for configuration:
       "env": {
         "PRODUCTIVE_API_KEY": "<api-key>",
         "PRODUCTIVE_ORGANIZATION": "<organization-id>"
-      }
-    }
-```
-
-### Using `uvx` from GitHub with TOON output enabled
-```json
-    "productive": {
-      "command": "uvx",
-      "args": [
-        "--from",
-        "git+https://github.com/druellan/Productive-Simple-MCP",
-        "productive-mcp"
-      ],
-      "env": {
-        "PRODUCTIVE_API_KEY": "<api-key>",
-        "PRODUCTIVE_ORGANIZATION": "<organization-id>",
-        "OUTPUT_FORMAT": "toon"
       }
     }
 ```
@@ -144,393 +93,41 @@ The server uses environment variables for configuration:
 
 ## Available Tools
 
+MCP clients receive the full schema and descriptions for each tool automatically. The tables below summarize them.
+
 ### Read Tools
 
-### `list_projects`
-Retrieve all projects with basic information.
-
-**Properties:**
-- No parameters (returns all projects)
-
-### `list_folders`
-Retrieve folders within a specific project.
-
-Productive's API exposes these resources through the `/folders` endpoint.
-
-**Properties:**
-- `project_id` (int, required): Filter folders by Productive project ID
-- `status` (int, optional): Folder status filter (`1` active, `2` archived). Defaults to `1`
-- `limit` (int, optional): Maximum number of folders to return (default: 50, max: 200)
-
-### `get_folder`
-Retrieve a specific folder by its ID.
-
-Productive's API exposes this resource through the `/folders` endpoint.
-
-**Properties:**
-- `folder_id` (int): The unique Productive folder identifier
-
-### `list_workflow_statuses`
-Retrieve workflow statuses with optional filters.
-
-**Properties:**
-- `workflow_id` (int, optional): Filter statuses by workflow ID
-- `category_id` (int, optional): Filter by category (`1` Not Started, `2` Started, `3` Closed)
-- `limit` (int, optional): Maximum number of statuses to return (default: 50, max: 200)
-
-### `list_time_entries`
-Retrieve time entries with optional date and relationship filters.
-
-**Properties:**
-- `date` (str, optional): Exact date filter (`YYYY-MM-DD`)
-- `after` (str, optional): Lower bound date filter (`YYYY-MM-DD`)
-- `before` (str, optional): Upper bound date filter (`YYYY-MM-DD`)
-- `person_id` (int, optional): Filter by person ID
-- `project_id` (int, optional): Filter by project ID
-- `task_id` (int, optional): Filter by task ID
-- `service_id` (int, optional): Filter by service ID
-- `page_number` (int, optional): Page number for pagination
-- `limit` (int, optional): Maximum number of entries to return (default: 50, max: 200)
-
-### `list_people`
-Retrieve people/team members with optional pagination.
-
-**Properties:**
-- `page_number` (int, optional): Page number for pagination
-- `page_size` (int, optional): Number of people to return per page (max: 200)
-
-### `get_person`
-Retrieve a specific person by ID.
-
-**Properties:**
-- `person_id` (int): The unique Productive person identifier
-
-### `list_tasks`
-Retrieve tasks with optional filtering and pagination.
-
-**Properties:**
-- `project_id` (int, optional): Filter tasks by Productive project ID
-- `user_id` (int, optional): Filter tasks by assignee/user ID
-- `page_number` (int, optional): Page number for pagination
-- `page_size` (int, optional): Page size for pagination (default: 50)
-- `sort` (str, optional): Sort parameter (e.g., 'last_activity_at', '-last_activity_at', 'created_at', 'due_date')
-- `extra_filters` (dict, optional): Additional Productive API filters (e.g., `{'filter[status][eq]': 1}` for open tasks, `{'filter[status][eq]': 2}` for closed tasks)
-
-### `get_task`
-Retrieve a specific task by its internal ID. Returns task details including title, description, status, dates, **time tracking metrics** (`initial_estimate`, `worked_time`, `billable_time`, `remaining_time`), and todo counts. Also includes enriched related data:
-- `comments`: the most recent comments (most recent first, up to `comment_limit`)
-- `todos`: up to 100 checklist items, with `todos_truncated` and `todos_note` when more exist
-- `attachments`: each file's `id` and `name` (filename)
-
-**Properties:**
-- `task_id` (int): The unique Productive task identifier (internal ID, e.g., 14677418)
-- `comment_limit` (int, optional): Number of most recent comments to include (default: 5, max: 200)
-
-### `get_task_history`
-Retrieve the full history for a specific task, including status changes, assignment history, milestones, and activity summary.
-
-**Properties:**
-- `task_id` (int): The unique Productive task identifier (internal ID, e.g., 14677418)
-- `hours` (int, optional): Number of hours to look back for activity history (default: 720 = 30 days, max: 8760)
-
-**Returns:**
-- `status_history`: Timeline of status changes with timestamps (from/to status and changed_at)
-- `assignment_history`: Assignment changes showing who was assigned and when (assigned_to and changed_at)
-- `milestones`: Key deliverables and completion markers from comments and activities
-- `activity_summary`: Counts of comments, changes, status updates, assignments, and milestones
-
-**Example:**
-```python
-get_task_history(14677921)  # Default 30-day history
-get_task_history(14677921, hours=168)  # Last week only
-get_task_history(14677921, hours=24)  # Last 24 hours
-```
-
-### `list_comments`
-Retrieve comments with optional filtering and pagination.
-
-**Properties:**
-- `project_id` (int, optional): Filter comments by Productive project ID
-- `task_id` (int, optional): Filter comments by Productive task ID
-- `page_number` (int, optional): Page number for pagination
-- `page_size` (int, optional): Page size for pagination
-- `extra_filters` (dict, optional): Additional Productive API filters (e.g., `{'filter[discussion_id]': '123'}`)
-
-### `list_pages`
-Retrieve pages/documents with optional filtering and pagination.
-
-**Properties:**
-- `project_id` (int, optional): Filter pages by Productive project ID
-- `creator_id` (int, optional): Filter pages by creator ID
-- `page_number` (int, optional): Page number for pagination
-- `page_size` (int, optional): Page size for pagination
-
-### `get_page`
-Retrieve a specific page/document by ID, including full content body.
-
-Returns the page body as readable HTML in `body_html` (converted from Productive's ProseMirror format). This HTML can be passed back to `update_page` to modify the page.
-
-**Properties:**
-- `page_id` (int): The unique Productive page identifier
-
-### `list_attachments`
-Retrieve attachments/files with optional filtering and pagination.
-
-**Properties:**
-- `page_number` (int, optional): Page number for pagination
-- `page_size` (int, optional): Page size for pagination
-- `extra_filters` (dict, optional): Additional Productive API filters
-
-### `list_recent_activity`
-Get a summarized feed of recent activities and updates. Perfect for status updates.
-
-**Properties:**
-- `hours` (int, optional): Number of hours to look back (default: 24, use 168 for a week)
-- `user_id` (int, optional): Filter by specific user/person ID
-- `project_id` (int, optional): Filter by specific project ID
-- `activity_type` (int, optional): Filter by activity type (1: Comment, 2: Changeset, 3: Email)
-- `item_type` (str, optional): Filter by item type (e.g., 'Task', 'Page', 'Deal', 'Workspace')
-- `event_type` (str, optional): Filter by event type (e.g., 'create', 'copy', 'update', 'delete')
-- `task_id` (int, optional): Filter by specific task ID
-- `max_results` (int, optional): Maximum number of activities to return (default: 100, max: 200)
-
-### `list_todos`
-Retrieve todo checklist items with optional filtering and pagination.
-
-**Properties:**
-- `task_id` (int, optional): Filter todos by Productive task ID
-- `page_number` (int, optional): Page number for pagination
-- `page_size` (int, optional): Page size for pagination
-- `extra_filters` (dict, optional): Additional Productive API filters
-
-### `quick_search`
-Quick search across projects, tasks, pages, and actions.
-
-**Properties:**
-- `query` (str): Search query string
-- `search_types` (list[str], optional): List of types to search (action, project, task, page). Defaults to all.
-- `deep_search` (bool, optional): Whether to perform deep search (default: True)
-- `page` (int, optional): Page number for pagination (default: 1)
-- `per_page` (int, optional): Results per page (default: 50)
-
-**Description:**
-Provides fast, comprehensive search across all Productive content types including projects, tasks, pages, and actions. It's optimized for quick lookups and general search queries.
-
-**Response Format:**
-Returns filtered results optimized for LLM consumption with only essential fields:
-- `record_id`: Unique identifier for the resource
-- `record_type`: Type of resource (project, task, page, etc.)
-- `title`: Display title (with search highlights removed)
-- `subtitle`: Additional context or description
-- `icon_url`: URL to the resource's icon/avatar (if available)
-- `status`: Current status (active, closed, etc.)
-- `project_name`: Name of the associated project
-- `updated_at`: Last update timestamp
-- `webapp_url`: Direct link to view the resource in Productive web interface
-
-**Examples:**
-```python
-quick_search("deployment")  # Search for "deployment" across all content types
-quick_search("meeting notes", search_types=["project"])  # Search only in projects
-quick_search("this week summary", deep_search=False)  # Quick search without deep scan
-```
-
-### `get_todo`
-Retrieve a specific todo checklist item by ID.
-
-**Properties:**
-- `todo_id` (int): The unique Productive todo checklist item identifier
-
-### Write Tools
-
-### `create_task`
-Create a new task in Productive.
-
-When `READ_ONLY=true`, this tool is blocked globally and returns a write-protection error.
-
-**Properties:**
-- `title` (str, required): Task title
-- `project_id` (int, required): Productive project ID where the task will be created
-- `description` (str, optional): Task description
-- `board_id` (int, optional): Board ID
-- `task_list_id` (int, optional): Task list ID
-- `assignee_id` (int, optional): Assignee/person ID
-- `due_date` (str, optional): Due date (`YYYY-MM-DD`)
-- `status` (str, optional): `open` or `closed` (default: `open`)
-
-### `update_task`
-
-Update an existing task in Productive. Only provided fields are modified (partial PATCH).
-At least one field must be given. When `READ_ONLY=true`, this tool is blocked globally.
-
-**Properties:**
-
-- `task_id` (int, required): Productive task ID to update
-- `title` (str, optional): New task title
-- `description` (str, optional): New task description
-- `assignee_id` (int, optional): New assignee person ID. Use 0 or negative to unassign.
-- `due_date` (str, optional): New due date (`YYYY-MM-DD`)
-- `status` (str, optional): New status — `open` or `closed`
-- `board_id` (int, optional): Move task to this board
-- `task_list_id` (int, optional): Move task to this task list
-
-### `delete_task`
-
-Permanently delete a task from Productive by its ID. This action is irreversible —
-the task and all associated data will be removed. When `READ_ONLY=true`, this tool is
-blocked globally.
-
-**Properties:**
-
-- `task_id` (int, required): Productive task ID to delete
-
-### `create_comment`
-
-Create a new comment on a task or project in Productive. A comment must be attached to
-at least one of task or project. When `READ_ONLY=true`, this tool is blocked globally.
-
-**Properties:**
-
-- `body` (str, required): Comment body text (HTML supported)
-- `task_id` (int, optional): Productive task ID to attach the comment to
-- `project_id` (int, optional): Productive project ID to attach the comment to
-
-### `update_comment`
-
-Update an existing comment in Productive. Only the body attribute can be modified.
-When `READ_ONLY=true`, this tool is blocked globally.
-
-**Properties:**
-
-- `comment_id` (int, required): Productive comment ID to update
-- `body` (str, required): New comment body text (HTML supported)
-
-### `delete_comment`
-
-Permanently delete a comment from Productive by its ID. This action is irreversible —
-the comment will be removed from the task or project. When `READ_ONLY=true`, this tool
-is blocked globally.
-
-**Properties:**
-
-- `comment_id` (int, required): Productive comment ID to delete
-
-### `create_time_entry`
-
-Create a new time entry in Productive for time tracking.
-
-Logs time spent on tasks or services. Either task_id or service_id must be provided.
-When `READ_ONLY=true`, this tool is blocked globally.
-
-**Properties:**
-
-- `date` (str, required): Date for the time entry (`YYYY-MM-DD`)
-- `time` (float, required): Time spent in hours (e.g., 2.5)
-- `person_id` (int, required): Person ID who logged the time
-- `task_id` (int, optional): Task ID to associate the time entry with
-- `service_id` (int, optional): Service ID to associate the time entry with
-- `note` (str, optional): Optional note or description
-
-### `update_time_entry`
-
-Update an existing time entry in Productive. Only provided fields are modified (partial PATCH).
-At least one field must be given. When `READ_ONLY=true`, this tool is blocked globally.
-
-**Properties:**
-
-- `time_entry_id` (int, required): Productive time entry ID to update
-- `date` (str, optional): New date (`YYYY-MM-DD`)
-- `time` (float, optional): New time in hours
-- `person_id` (int, optional): New person ID
-- `task_id` (int, optional): New task ID
-- `service_id` (int, optional): New service ID
-- `note` (str, optional): New note
-
-### `delete_time_entry`
-
-Permanently delete a time entry from Productive by its ID. This action is irreversible —
-the time entry will be removed from time tracking records. When `READ_ONLY=true`, this tool
-is blocked globally.
-
-**Properties:**
-
-- `time_entry_id` (int, required): Productive time entry ID to delete
-
-### `create_page`
-
-Create a new page/document in a Productive project.
-
-Pages are documents that can contain rich text content and are organized within projects.
-When `READ_ONLY=true`, this tool is blocked globally.
-
-**Properties:**
-
-- `title` (str, required): Page title
-- `project_id` (int, required): Productive project ID where the page will be created
-- `content` (str, optional): Page content as HTML markup (e.g. `<h1>Title</h1><p>Body text</p>`)
-
-### `update_page`
-
-Update an existing page/document in Productive. Only provided fields are modified (partial PATCH).
-At least one field must be given. When `READ_ONLY=true`, this tool is blocked globally.
-
-**Properties:**
-
-- `page_id` (int, required): Productive page ID to update
-- `title` (str, optional): New page title
-- `content` (str, optional): New page content as HTML markup (e.g. `<h1>Title</h1><p>Body text</p>`)
-
-### `delete_page`
-
-Permanently delete a page/document from Productive by its ID. This action is irreversible —
-the page and all its content will be removed. When `READ_ONLY=true`, this tool is blocked globally.
-
-**Properties:**
-
-- `page_id` (int, required): Productive page ID to delete
-
-### `append_page_content`
-
-Append content to the end of an existing page/document in Productive without fetching its current body. Exactly one of `markdown` or `html` must be provided.
-When `READ_ONLY=true`, this tool is blocked globally.
-
-**Properties:**
-
-- `page_id` (int, required): Productive page ID to append content to
-- `markdown` (str, optional): Markdown content to append (e.g. `# New section\n\n- item one`)
-- `html` (str, optional): HTML content to append (e.g. `<h2>New section</h2><p>Body text</p>`)
-
-### `create_todo`
-
-Create a new todo checklist item for a task in Productive.
-
-Todos are checkbox items within tasks for granular tracking of work items.
-When `READ_ONLY=true`, this tool is blocked globally.
-
-**Properties:**
-
-- `content` (str, required): Todo item content/description
-- `task_id` (int, required): Productive task ID to add the todo to
-
-### `update_todo`
-
-Update an existing todo checklist item in Productive. Only provided fields are modified (partial PATCH).
-At least one field must be given. When `READ_ONLY=true`, this tool is blocked globally.
-
-**Properties:**
-
-- `todo_id` (int, required): Productive todo ID to update
-- `content` (str, optional): New todo content
-- `completed` (bool, optional): Mark todo as completed (true) or incomplete (false)
-
-### `delete_todo`
-
-Permanently delete a todo checklist item from Productive by its ID. This action is irreversible —
-the todo item will be removed from the task. When `READ_ONLY=true`, this tool is blocked globally.
-
-**Properties:**
-
-- `todo_id` (int, required): Productive todo ID to delete
+| Tool | Description |
+|------|-------------|
+| `list_projects` | List all projects |
+| `list_folders` | List folders in a project (`project_id` required) |
+| `get_folder` | Get a folder by ID |
+| `list_workflow_statuses` | List workflow statuses, optionally filtered by workflow/category |
+| `list_time_entries` | List time entries with date/person/project/task/service filters |
+| `list_tasks` | List tasks with filtering, sorting, and pagination |
+| `get_task` | Get a task by ID, enriched with recent comments, todos, and attachments |
+| `get_task_history` | Get task status/assignment history, milestones, and activity summary |
+| `list_comments` | List comments, optionally filtered by project/task |
+| `list_pages` | List pages/documents, optionally filtered by project/creator |
+| `get_page` | Get a page by ID with readable `body_html` |
+| `list_attachments` | List attachment metadata |
+| `list_todos` | List todo checklist items, optionally filtered by task |
+| `get_todo` | Get a todo by ID |
+| `list_people` | List team members |
+| `get_person` | Get a person by ID |
+| `list_recent_activity` | Summarized feed of recent activities |
+| `quick_search` | Search across projects, tasks, pages, and actions |
+
+### Write Tools (blocked when `READ_ONLY=true`)
+
+| Tool | Description |
+|------|-------------|
+| `create_task` / `update_task` / `delete_task` | Manage tasks |
+| `create_comment` / `update_comment` / `delete_comment` | Manage comments |
+| `create_time_entry` / `update_time_entry` / `delete_time_entry` | Manage time entries |
+| `create_page` / `update_page` / `delete_page` | Manage pages/documents |
+| `append_page_content` | Append markdown or HTML to a page |
+| `create_todo` / `update_todo` / `delete_todo` | Manage todo checklist items |
 
 ## Output Format
 
@@ -551,7 +148,7 @@ All tools return filtered data optimized for LLM processing:
 - HTML stripped from descriptions and comments
 - Empty/null values removed
 - Pagination links removed
-- List views use lightweight output (e.g., `get_project_tasks` excludes descriptions and relationships)
+- List views use lightweight output (e.g., `list_tasks` excludes descriptions and relationships)
 - **Web app URLs included**: Each resource includes a `webapp_url` field linking directly to the Productive web interface
 
 **Response Structure:**
