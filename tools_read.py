@@ -1,6 +1,6 @@
 from fastmcp import Context
 from fastmcp.tools.tool import ToolResult
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 from config import config
 from productive_client import client, ProductiveAPIError
@@ -267,14 +267,28 @@ async def list_tasks(ctx: Context, page_number: int = None, page_size: int = con
         raise e
 
 
-async def get_task(ctx: Context, task_id: int) -> ToolResult:
-    """Fetch a single task by internal ID.
+async def _fetch_enrichment(ctx: Context, label: str, coro) -> Optional[Dict[str, Any]]:
+    """Fetch enrichment data for get_task; on failure log a warning and return None."""
+    try:
+        return await coro
+    except Exception as e:
+        await ctx.warning(f"Failed to fetch {label} for task: {e}")
+        return None
+
+
+async def get_task(ctx: Context, task_id: int, comment_limit: int = 5) -> ToolResult:
+    """Fetch a single task by internal ID, enriched with comments, todos, and attachments.
 
     Developer notes:
     - Wraps client.get_task(task_id).
     - Applies utils.filter_response to sanitize output.
     - Ensures time tracking fields are always present (initial_estimate, worked_time, billable_time, remaining_time).
-    - Raises ProductiveAPIError on failure.
+    - Enriches the response with:
+      - comments: the most recent `comment_limit` comments (via list_comments, most recent first)
+      - todos: up to 100 todos (via list_todos), with todos_truncated/todos_note when more exist
+      - attachments: id + filename (via list_attachments filtered by task)
+    - Enrichment failures warn and return empty lists instead of failing the whole call.
+    - Raises ProductiveAPIError on failure to fetch the task itself.
     """
     try:
         await ctx.info(f"Fetching task with ID: {task_id}")
@@ -293,6 +307,42 @@ async def get_task(ctx: Context, task_id: int) -> ToolResult:
             for field, default_value in time_fields.items():
                 if field not in attributes:
                     attributes[field] = default_value
+
+        comment_limit = max(1, min(comment_limit, 200))
+
+        comments_result = await _fetch_enrichment(
+            ctx, "comments", list_comments(ctx, task_id=task_id, page_size=comment_limit)
+        )
+        todos_result = await _fetch_enrichment(
+            ctx, "todos", list_todos(ctx, task_id=task_id, page_size=100)
+        )
+        attachments_result = await _fetch_enrichment(
+            ctx,
+            "attachments",
+            list_attachments(ctx, extra_filters={"filter[task_id][eq]": task_id}),
+        )
+
+        filtered["comments"] = (comments_result or {}).get("data", [])
+        filtered["todos"] = (todos_result or {}).get("data", [])
+
+        total_todos = ((todos_result or {}).get("meta") or {}).get("total_count")
+        if total_todos is not None and total_todos > len(filtered["todos"]):
+            filtered["todos_truncated"] = True
+            filtered["todos_note"] = (
+                f"Task has {total_todos} todos; showing first {len(filtered['todos'])}. "
+                f"Call list_todos(task_id={task_id}) to fetch all."
+            )
+        elif total_todos is None and len(filtered["todos"]) >= 100:
+            filtered["todos_truncated"] = True
+            filtered["todos_note"] = (
+                f"Task has more than {len(filtered['todos'])} todos. "
+                f"Call list_todos(task_id={task_id}) to fetch all."
+            )
+
+        filtered["attachments"] = [
+            {"id": attachment.get("id"), "name": (attachment.get("attributes") or {}).get("name")}
+            for attachment in (attachments_result or {}).get("data", [])
+        ]
 
         return filtered
 

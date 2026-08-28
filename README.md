@@ -217,10 +217,14 @@ Retrieve tasks with optional filtering and pagination.
 - `extra_filters` (dict, optional): Additional Productive API filters (e.g., `{'filter[status][eq]': 1}` for open tasks, `{'filter[status][eq]': 2}` for closed tasks)
 
 ### `get_task`
-Retrieve a specific task by its internal ID. Returns task details including title, description, status, dates, **time tracking metrics** (`initial_estimate`, `worked_time`, `billable_time`, `remaining_time`), and todo counts.
+Retrieve a specific task by its internal ID. Returns task details including title, description, status, dates, **time tracking metrics** (`initial_estimate`, `worked_time`, `billable_time`, `remaining_time`), and todo counts. Also includes enriched related data:
+- `comments`: the most recent comments (most recent first, up to `comment_limit`)
+- `todos`: up to 100 checklist items, with `todos_truncated` and `todos_note` when more exist
+- `attachments`: each file's `id` and `name` (filename)
 
 **Properties:**
 - `task_id` (int): The unique Productive task identifier (internal ID, e.g., 14677418)
+- `comment_limit` (int, optional): Number of most recent comments to include (default: 5, max: 200)
 
 ### `get_task_history`
 Retrieve the full history for a specific task, including status changes, assignment history, milestones, and activity summary.

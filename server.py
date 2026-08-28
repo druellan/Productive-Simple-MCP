@@ -395,6 +395,12 @@ async def get_task(
     task_id: Annotated[
         int, Field(description="The unique Productive task identifier (internal ID)")
     ],
+    comment_limit: Annotated[
+        int,
+        Field(
+            description="Number of most recent comments to include (default: 5, max: 200)"
+        ),
+    ] = 5,
 ) -> Dict[str, Any]:
     """Get detailed task information by its internal task ID (e.g., 14677418).
 
@@ -402,8 +408,11 @@ async def get_task(
     - Title, description, status (open/closed), due date, and timestamps
     - Time tracking: initial estimate, remaining, billable, and worked time (in minutes)
     - Todo counts: total and open
+    - comments: the most recent comments (up to `comment_limit`, most recent first)
+    - todos: up to 100 checklist items, with `todos_truncated` and `todos_note` when more exist
+    - attachments: id and filename for each file attached to the task
     """
-    return await tools.get_task(ctx=ctx, task_id=task_id)
+    return await tools.get_task(ctx=ctx, task_id=task_id, comment_limit=comment_limit)
 
 
 async def create_task(
