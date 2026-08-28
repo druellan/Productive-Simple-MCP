@@ -1067,6 +1067,8 @@ async def get_page(
     """Get a specific page/document by ID, including full content body.
 
     Use this when: You need the full content body of a specific page (not just metadata or titles).
+
+    Returns the page body as readable HTML in `body_html`.
     """
     return await tools.get_page(ctx, page_id)
 

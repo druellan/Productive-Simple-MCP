@@ -266,7 +266,9 @@ Retrieve pages/documents with optional filtering and pagination.
 - `page_size` (int, optional): Page size for pagination
 
 ### `get_page`
-Retrieve a specific page/document by ID.
+Retrieve a specific page/document by ID, including full content body.
+
+Returns the page body as readable HTML in `body_html` (converted from Productive's ProseMirror format). This HTML can be passed back to `update_page` to modify the page.
 
 **Properties:**
 - `page_id` (int): The unique Productive page identifier

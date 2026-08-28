@@ -4,7 +4,7 @@ from typing import Any, Dict, Optional
 
 from config import config
 from productive_client import client, ProductiveAPIError
-from utils import filter_response, filter_task_list_response, filter_page_list_response, get_webapp_url
+from utils import filter_response, filter_task_list_response, filter_page_list_response, get_webapp_url, prosemirror_to_html
 
 
 
@@ -792,7 +792,7 @@ async def get_page(ctx: Context, page_id: int) -> ToolResult:
     """Fetch a single page by ID.
 
     Developer notes:
-    - Body is JSON in attributes.body (caller may parse if needed).
+    - Body is returned as readable HTML (body_html).
     - Applies utils.filter_response to sanitize (body included via type='page').
     """
     try:
@@ -801,6 +801,11 @@ async def get_page(ctx: Context, page_id: int) -> ToolResult:
         await ctx.info("Successfully retrieved page")
 
         filtered = filter_response(result)
+
+        # Convert the raw ProseMirror JSON body to readable HTML for LLM consumption.
+        attributes = (filtered.get("data") or {}).get("attributes")
+        if attributes and "body" in attributes:
+            attributes["body_html"] = prosemirror_to_html(attributes.pop("body"))
 
         return filtered
 
