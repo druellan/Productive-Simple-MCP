@@ -698,8 +698,9 @@ async def get_task_history(
         # Build activity summary
         activity_summary = {
             "total_activities": len(activities),
-            "total_comments": len([a for a in activities if a.get("attributes", {}).get("item_type") == "Comment"]),
-            "total_changes": len([a for a in activities if a.get("attributes", {}).get("item_type") == "Task"]),
+            "total_comments": len([a for a in activities if (a.get("attributes", {}).get("item_type") or "").lower() == "comment"]),
+            "total_changes": len([a for a in activities if (a.get("attributes", {}).get("item_type") or "").lower() == "task"]),
+            "total_todos": len([a for a in activities if (a.get("attributes", {}).get("item_type") or "").lower() == "todo"]),
             "total_status_changes": len(status_history),
             "total_assignments": len(assignment_history),
             "total_milestones": len(milestones),
