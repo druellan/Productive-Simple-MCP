@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.9](https://github.com/druellan/Productive-Simple-MCP/compare/v0.2.8...v0.2.9) (2026-09-09)
+
+
+### Features
+
+* streamline README features section and enhance tool descriptions ([44a7b60](https://github.com/druellan/Productive-Simple-MCP/commit/44a7b605cc38ce1d70d463eb550805b983849c9c))
+
 ## [0.2.8](https://github.com/druellan/Productive-Simple-MCP/compare/v0.2.7...v0.2.8) (2026-08-28)
 
 
