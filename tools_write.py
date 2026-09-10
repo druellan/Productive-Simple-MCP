@@ -1,7 +1,7 @@
 import re
 from datetime import datetime
 from fastmcp import Context
-from fastmcp.tools.tool import ToolResult
+from fastmcp.tools import ToolResult
 
 from config import config
 from productive_client import client, ProductiveAPIError

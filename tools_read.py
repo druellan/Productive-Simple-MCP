@@ -1,5 +1,5 @@
 from fastmcp import Context
-from fastmcp.tools.tool import ToolResult
+from fastmcp.tools import ToolResult
 from typing import Any, Dict, Optional
 
 from config import config
