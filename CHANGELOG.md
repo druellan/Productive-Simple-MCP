@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.10](https://github.com/druellan/Productive-Simple-MCP/compare/v0.2.9...v0.2.10) (2026-09-10)
+
+
+### Bug Fixes
+
+* use public ToolResult import path for FastMCP compatibility ([62d5ea3](https://github.com/druellan/Productive-Simple-MCP/commit/62d5ea3ff61f97e3fe2c9ba76014973f82fa0690))
+
 ## [0.2.9](https://github.com/druellan/Productive-Simple-MCP/compare/v0.2.8...v0.2.9) (2026-09-09)
 
 
